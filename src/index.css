@@ -1,0 +1,876 @@
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Pacifico&display=swap');
+@import "tailwindcss";
+
+.font-cursive {
+  font-family: 'Dancing Script', 'Pacifico', cursive;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f8fafc;
+  color: #1e293b;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.scrollbar-none,
+.p-dialog-content.scrollbar-none,
+.p-dialog-content.scrollbar-none * {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+.scrollbar-none::-webkit-scrollbar,
+.p-dialog-content.scrollbar-none::-webkit-scrollbar,
+.p-dialog-content.scrollbar-none *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Premium Compact DataTable Overrides */
+.p-datatable {
+  border-radius: 0px !important;
+  overflow: hidden;
+}
+
+.bg-white:has(.p-datatable) {
+  border-radius: 0px !important;
+  border-left: none !important;
+  border-right: none !important;
+  box-shadow: none !important;
+}
+
+.p-datatable .p-datatable-thead > tr > th {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #475569;
+  background: #f8fafc;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.p-sortable-column-icon {
+  display: none !important;
+}
+
+.p-datatable .p-datatable-tbody > tr > td {
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.875rem;
+  color: #334155;
+}
+
+.p-datatable .p-datatable-tbody > tr {
+  background: white;
+  transition: background-color 0.15s ease;
+}
+
+.p-datatable .p-datatable-tbody > tr:hover {
+  background: #f8fafc !important;
+}
+
+/* Premium Dialog Styling */
+.p-dialog {
+  border-radius: 1rem !important;
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1) !important;
+  border: 1px solid #f1f5f9;
+  overflow: hidden;
+}
+
+.p-dialog-header {
+  padding: 1.25rem 1.5rem 1rem !important;
+  font-weight: 700 !important;
+  font-size: 1.125rem !important;
+  background: white !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+.p-dialog-content {
+  padding: 1.5rem 1.5rem !important;
+  background: white !important;
+}
+
+.p-dialog-footer {
+  padding: 1rem 1.5rem 1.25rem !important;
+  background: #f8fafc !important;
+  border-top: 1px solid #f1f5f9 !important;
+}
+
+.p-toast {
+  border-radius: 0.75rem !important;
+}
+
+/* Premium Paginator Styling Overrides */
+.p-paginator {
+  background: #ffffff !important;
+  border-top: 1px solid #f1f5f9 !important;
+  padding: 0.75rem 1rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.25rem !important;
+}
+
+.p-paginator button {
+  min-width: 2.25rem !important;
+  height: 2.25rem !important;
+  border-radius: 0.5rem !important;
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  color: #64748b !important;
+  font-size: 0.875rem !important;
+  transition: all 0.15s ease !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.p-paginator button:hover:not(.p-disabled) {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+  border-color: #e2e8f0 !important;
+}
+
+.p-paginator button.p-disabled {
+  opacity: 0.35 !important;
+  cursor: not-allowed !important;
+}
+
+.p-paginator .p-paginator-pages {
+  display: flex !important;
+  gap: 0.25rem !important;
+}
+
+.p-paginator .p-paginator-page {
+  font-weight: 500 !important;
+}
+
+.p-paginator .p-paginator-page.p-highlight {
+  background: #1e3a8a !important; /* Deep royal blue */
+  color: #ffffff !important;      /* White text */
+  border-color: #1e3a8a !important;
+  font-weight: 600 !important;
+}
+
+/* Custom visual helper utilities */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Force 0px border-radius and remove box shadow on all buttons, inputs, textareas, and select dropdowns globally */
+input, select, textarea, button, .p-inputtext, .p-button, .p-dropdown, .p-paginator button, .p-paginator-page {
+  border-radius: 0px !important;
+  box-shadow: none !important;
+}
+
+/* Force primary buttons to use the deep blue-900 (royal blue) theme color */
+button.bg-blue-600, .p-button {
+  background-color: #1e3a8a !important; /* Deep blue-900 */
+  border-color: #1e3a8a !important;
+}
+
+button.bg-blue-600:hover, .p-button:hover {
+  background-color: #1e40af !important; /* Blue-800 on hover */
+  border-color: #1e40af !important;
+}
+
+button.bg-blue-600:disabled, .p-button:disabled {
+  background-color: #93c5fd !important;
+  border-color: #93c5fd !important;
+  cursor: not-allowed !important;
+}
+
+/* Specific shape override to keep circular buttons matching active theme accent color */
+button.sidebar-toggle-btn {
+  border-radius: 50% !important;
+  background-color: #ffffff !important;
+  color: var(--accent-primary, #1e3a8a) !important;
+}
+
+button.sidebar-toggle-btn i,
+button.sidebar-toggle-btn .pi {
+  color: var(--accent-primary, #1e3a8a) !important;
+}
+
+/* 50% Circular Icon Buttons Override (Bypasses global 0px button border-radius) */
+button.topbar-download-btn,
+button.icon-btn-circle,
+.icon-btn-circle {
+  border-radius: 50% !important;
+}
+
+/* Sidebar Nav Item Button border radius rules */
+button.sidebar-nav-btn {
+  border-radius: 10px !important;
+}
+button.sidebar-nav-btn.active {
+  border-radius: 50px !important;
+}
+
+/* Force premium modern typography stack globally, bypassing faulty theme references */
+body, input, select, textarea, button, table, tr, th, td, div, span, p, h1, h2, h3, h4, h5, h6, a {
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+}
+
+/* Safeguard PrimeIcons from being overwritten by global typography stack */
+.pi {
+  font-family: 'primeicons' !important;
+}
+
+/* ==========================================
+   Multi-Theme System Variables & Overrides
+   ========================================== */
+
+:root {
+  --bg-app: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-sidebar: #ffffff;
+  --border-color: #e2e8f0;
+  --border-light: #f1f5f9;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --bg-hover: #f8fafc;
+  --accent-primary: #1e3a8a;
+  --accent-hover: #1e40af;
+  --accent-contrast: #ffffff;
+}
+
+body.theme-midnight {
+  --bg-app: #090d16;
+  --bg-card: #0f172a;
+  --bg-sidebar: #0f172a;
+  --border-color: #1e293b;
+  --border-light: #334155;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --bg-hover: #1e293b;
+  --accent-primary: #3b82f6;
+  --accent-hover: #60a5fa;
+  --accent-contrast: #ffffff;
+}
+
+body.theme-forest {
+  --bg-app: #030d0a;
+  --bg-card: #081a14;
+  --bg-sidebar: #081a14;
+  --border-color: #0f3025;
+  --border-light: #184c3b;
+  --text-primary: #f0fdf4;
+  --text-secondary: #86efac;
+  --bg-hover: #0f3025;
+  --accent-primary: #10b981;
+  --accent-hover: #34d399;
+  --accent-contrast: #ffffff;
+}
+
+body.theme-oceanic {
+  --bg-app: #020d12;
+  --bg-card: #05161e;
+  --bg-sidebar: #05161e;
+  --border-color: #0a2e3d;
+  --border-light: #0f445a;
+  --text-primary: #ecfeff;
+  --text-secondary: #67e8f9;
+  --bg-hover: #0a2e3d;
+  --accent-primary: #06b6d4;
+  --accent-hover: #22d3ee;
+  --accent-contrast: #0f172a;
+}
+
+body.theme-sunset {
+  --bg-app: #0a040d;
+  --bg-card: #14081c;
+  --bg-sidebar: #14081c;
+  --border-color: #2b113c;
+  --border-light: #441a5f;
+  --text-primary: #fdf4ff;
+  --text-secondary: #f0abfc;
+  --bg-hover: #2b113c;
+  --accent-primary: #c084fc;
+  --accent-hover: #d8b4fe;
+  --accent-contrast: #0f040d;
+}
+
+body.theme-cyberpunk {
+  --bg-app: #0d0d0d;
+  --bg-card: #181818;
+  --bg-sidebar: #181818;
+  --border-color: #2e2e2e;
+  --border-light: #444444;
+  --text-primary: #ffffff;
+  --text-secondary: #a3a3a3;
+  --bg-hover: #2e2e2e;
+  --accent-primary: #fbbf24;
+  --accent-hover: #f59e0b;
+  --accent-contrast: #0d0d0d;
+}
+
+body.theme-aquabreeze {
+  --bg-app: #ecfeff;
+  --bg-card: #ffffff;
+  --bg-sidebar: #ffffff;
+  --border-color: #cffafe;
+  --border-light: #ecfeff;
+  --text-primary: #083344;
+  --text-secondary: #0891b2;
+  --bg-hover: #f0fdfa;
+  --accent-primary: #0891b2;
+  --accent-hover: #0e7490;
+  --accent-contrast: #ffffff;
+}
+
+body.theme-lavender {
+  --bg-app: #faf5ff;
+  --bg-card: #ffffff;
+  --bg-sidebar: #ffffff;
+  --border-color: #f3e8ff;
+  --border-light: #faf5ff;
+  --text-primary: #3b0764;
+  --text-secondary: #7c3aed;
+  --bg-hover: #fdf4ff;
+  --accent-primary: #7c3aed;
+  --accent-hover: #6d28d9;
+  --accent-contrast: #ffffff;
+}
+
+body.theme-solarsand {
+  --bg-app: #fefaf0;
+  --bg-card: #ffffff;
+  --bg-sidebar: #ffffff;
+  --border-color: #f7e8cf;
+  --border-light: #fefaf0;
+  --text-primary: #451a03;
+  --text-secondary: #d97706;
+  --bg-hover: #fffbeb;
+  --accent-primary: #d97706;
+  --accent-hover: #b45309;
+  --accent-contrast: #ffffff;
+}
+
+body.theme-nordicsnow {
+  --bg-app: #f0f9ff;
+  --bg-card: #ffffff;
+  --bg-sidebar: #ffffff;
+  --border-color: #e0f2fe;
+  --border-light: #f0f9ff;
+  --text-primary: #0c4a6e;
+  --text-secondary: #0284c7;
+  --bg-hover: #f0fdfa;
+  --accent-primary: #0284c7;
+  --accent-hover: #0369a1;
+  --accent-contrast: #ffffff;
+}
+
+body.theme-crimson {
+  --bg-app: #0e0405;
+  --bg-card: #1c0c0e;
+  --bg-sidebar: #1c0c0e;
+  --border-color: #381418;
+  --border-light: #541d24;
+  --text-primary: #fef2f2;
+  --text-secondary: #f87171;
+  --bg-hover: #381418;
+  --accent-primary: #dc2626;
+  --accent-hover: #ef4444;
+  --accent-contrast: #ffffff;
+}
+
+body.theme-monochrome {
+  --bg-app: #121212;
+  --bg-card: #1a1a1a;
+  --bg-sidebar: #1a1a1a;
+  --border-color: #2e2e2e;
+  --border-light: #3e3e3e;
+  --text-primary: #e5e5e5;
+  --text-secondary: #a3a3a3;
+  --bg-hover: #262626;
+  --accent-primary: #f5f5f5;
+  --accent-hover: #ffffff;
+  --accent-contrast: #121212;
+}
+
+/* Global class overrides when any non-default theme is active on body */
+body.theme-midnight, body.theme-forest, body.theme-oceanic, body.theme-sunset, body.theme-cyberpunk,
+body.theme-aquabreeze, body.theme-lavender, body.theme-solarsand, body.theme-nordicsnow,
+body.theme-crimson, body.theme-monochrome {
+  background-color: var(--bg-app) !important;
+  color: var(--text-primary) !important;
+}
+
+body.theme-midnight .bg-white, body.theme-forest .bg-white, body.theme-oceanic .bg-white, body.theme-sunset .bg-white, body.theme-cyberpunk .bg-white,
+body.theme-aquabreeze .bg-white, body.theme-lavender .bg-white, body.theme-solarsand .bg-white, body.theme-nordicsnow .bg-white,
+body.theme-crimson .bg-white, body.theme-monochrome .bg-white {
+  background-color: var(--bg-card) !important;
+}
+
+body.theme-midnight .bg-slate-200\/45, body.theme-forest .bg-slate-200\/45, body.theme-oceanic .bg-slate-200\/45, body.theme-sunset .bg-slate-200\/45, body.theme-cyberpunk .bg-slate-200\/45,
+body.theme-aquabreeze .bg-slate-200\/45, body.theme-lavender .bg-slate-200\/45, body.theme-solarsand .bg-slate-200\/45, body.theme-nordicsnow .bg-slate-200\/45,
+body.theme-crimson .bg-slate-200\/45, body.theme-monochrome .bg-slate-200\/45 {
+  background-color: var(--bg-app) !important;
+}
+
+body.theme-midnight aside, body.theme-forest aside, body.theme-oceanic aside, body.theme-sunset aside, body.theme-cyberpunk aside,
+body.theme-aquabreeze aside, body.theme-lavender aside, body.theme-solarsand aside, body.theme-nordicsnow aside,
+body.theme-crimson aside, body.theme-monochrome aside {
+  background-color: var(--bg-sidebar) !important;
+  border-right: 1px solid var(--border-color) !important;
+}
+
+body.theme-midnight header, body.theme-forest header, body.theme-oceanic header, body.theme-sunset header, body.theme-cyberpunk header,
+body.theme-aquabreeze header, body.theme-lavender header, body.theme-solarsand header, body.theme-nordicsnow header,
+body.theme-crimson header, body.theme-monochrome header {
+  background-color: var(--bg-card) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+/* Text overrides */
+body.theme-midnight .text-slate-800, body.theme-midnight .text-slate-900, body.theme-midnight .text-slate-700, body.theme-midnight .text-slate-650, body.theme-midnight .text-slate-600,
+body.theme-forest .text-slate-800, body.theme-forest .text-slate-900, body.theme-forest .text-slate-700, body.theme-forest .text-slate-650, body.theme-forest .text-slate-600,
+body.theme-oceanic .text-slate-800, body.theme-oceanic .text-slate-900, body.theme-oceanic .text-slate-700, body.theme-oceanic .text-slate-650, body.theme-oceanic .text-slate-600,
+body.theme-sunset .text-slate-800, body.theme-sunset .text-slate-900, body.theme-sunset .text-slate-700, body.theme-sunset .text-slate-650, body.theme-sunset .text-slate-600,
+body.theme-cyberpunk .text-slate-800, body.theme-cyberpunk .text-slate-900, body.theme-cyberpunk .text-slate-700, body.theme-cyberpunk .text-slate-650, body.theme-cyberpunk .text-slate-600,
+body.theme-aquabreeze .text-slate-800, body.theme-aquabreeze .text-slate-900, body.theme-aquabreeze .text-slate-700, body.theme-aquabreeze .text-slate-650, body.theme-aquabreeze .text-slate-600,
+body.theme-lavender .text-slate-800, body.theme-lavender .text-slate-900, body.theme-lavender .text-slate-700, body.theme-lavender .text-slate-650, body.theme-lavender .text-slate-600,
+body.theme-solarsand .text-slate-800, body.theme-solarsand .text-slate-900, body.theme-solarsand .text-slate-700, body.theme-solarsand .text-slate-650, body.theme-solarsand .text-slate-600,
+body.theme-nordicsnow .text-slate-800, body.theme-nordicsnow .text-slate-900, body.theme-nordicsnow .text-slate-700, body.theme-nordicsnow .text-slate-650, body.theme-nordicsnow .text-slate-600,
+body.theme-crimson .text-slate-800, body.theme-crimson .text-slate-900, body.theme-crimson .text-slate-700, body.theme-crimson .text-slate-650, body.theme-crimson .text-slate-600,
+body.theme-monochrome .text-slate-800, body.theme-monochrome .text-slate-900, body.theme-monochrome .text-slate-700, body.theme-monochrome .text-slate-650, body.theme-monochrome .text-slate-600 {
+  color: var(--text-primary) !important;
+}
+
+body.theme-midnight .text-slate-400, body.theme-midnight .text-slate-500,
+body.theme-forest .text-slate-400, body.theme-forest .text-slate-500,
+body.theme-oceanic .text-slate-400, body.theme-oceanic .text-slate-500,
+body.theme-sunset .text-slate-400, body.theme-sunset .text-slate-500,
+body.theme-cyberpunk .text-slate-400, body.theme-cyberpunk .text-slate-500,
+body.theme-aquabreeze .text-slate-400, body.theme-aquabreeze .text-slate-500,
+body.theme-lavender .text-slate-400, body.theme-lavender .text-slate-500,
+body.theme-solarsand .text-slate-400, body.theme-solarsand .text-slate-500,
+body.theme-nordicsnow .text-slate-400, body.theme-nordicsnow .text-slate-500,
+body.theme-crimson .text-slate-400, body.theme-crimson .text-slate-500,
+body.theme-monochrome .text-slate-400, body.theme-monochrome .text-slate-500 {
+  color: var(--text-secondary) !important;
+}
+
+/* Border overrides */
+body.theme-midnight .border-slate-200, body.theme-midnight .border-slate-200\/80, body.theme-midnight .border-slate-200\/60,
+body.theme-forest .border-slate-200, body.theme-forest .border-slate-200\/80, body.theme-forest .border-slate-200\/60,
+body.theme-oceanic .border-slate-200, body.theme-oceanic .border-slate-200\/80, body.theme-oceanic .border-slate-200\/60,
+body.theme-sunset .border-slate-200, body.theme-sunset .border-slate-200\/80, body.theme-sunset .border-slate-200\/60,
+body.theme-cyberpunk .border-slate-200, body.theme-cyberpunk .border-slate-200\/80, body.theme-cyberpunk .border-slate-200\/60,
+body.theme-aquabreeze .border-slate-200, body.theme-aquabreeze .border-slate-200\/80, body.theme-aquabreeze .border-slate-200\/60,
+body.theme-lavender .border-slate-200, body.theme-lavender .border-slate-200\/80, body.theme-lavender .border-slate-200\/60,
+body.theme-solarsand .border-slate-200, body.theme-solarsand .border-slate-200\/80, body.theme-solarsand .border-slate-200\/60,
+body.theme-nordicsnow .border-slate-200, body.theme-nordicsnow .border-slate-200\/80, body.theme-nordicsnow .border-slate-200\/60,
+body.theme-crimson .border-slate-200, body.theme-crimson .border-slate-200\/80, body.theme-crimson .border-slate-200\/60,
+body.theme-monochrome .border-slate-200, body.theme-monochrome .border-slate-200\/80, body.theme-monochrome .border-slate-200\/60 {
+  border-color: var(--border-color) !important;
+}
+
+body.theme-midnight .border-slate-100, body.theme-midnight .border-slate-50,
+body.theme-forest .border-slate-100, body.theme-forest .border-slate-50,
+body.theme-oceanic .border-slate-100, body.theme-oceanic .border-slate-50,
+body.theme-sunset .border-slate-100, body.theme-sunset .border-slate-50,
+body.theme-cyberpunk .border-slate-100, body.theme-cyberpunk .border-slate-50,
+body.theme-aquabreeze .border-slate-100, body.theme-aquabreeze .border-slate-50,
+body.theme-lavender .border-slate-100, body.theme-lavender .border-slate-50,
+body.theme-solarsand .border-slate-100, body.theme-solarsand .border-slate-50,
+body.theme-nordicsnow .border-slate-100, body.theme-nordicsnow .border-slate-50,
+body.theme-crimson .border-slate-100, body.theme-crimson .border-slate-50,
+body.theme-monochrome .border-slate-100, body.theme-monochrome .border-slate-50 {
+  border-color: var(--border-light) !important;
+}
+
+/* Hover background overrides */
+body.theme-midnight .hover\:bg-slate-50:hover,
+body.theme-forest .hover\:bg-slate-50:hover,
+body.theme-oceanic .hover\:bg-slate-50:hover,
+body.theme-sunset .hover\:bg-slate-50:hover,
+body.theme-cyberpunk .hover\:bg-slate-50:hover,
+body.theme-aquabreeze .hover\:bg-slate-50:hover,
+body.theme-lavender .hover\:bg-slate-50:hover,
+body.theme-solarsand .hover\:bg-slate-50:hover,
+body.theme-nordicsnow .hover\:bg-slate-50:hover,
+body.theme-crimson .hover\:bg-slate-50:hover,
+body.theme-monochrome .hover\:bg-slate-50:hover {
+  background-color: var(--bg-hover) !important;
+}
+
+/* Input elements inside dark themes */
+body.theme-midnight input, body.theme-midnight select, body.theme-midnight textarea,
+body.theme-forest input, body.theme-forest select, body.theme-forest textarea,
+body.theme-oceanic input, body.theme-oceanic select, body.theme-oceanic textarea,
+body.theme-sunset input, body.theme-sunset select, body.theme-sunset textarea,
+body.theme-cyberpunk input, body.theme-cyberpunk select, body.theme-cyberpunk textarea,
+body.theme-aquabreeze input, body.theme-aquabreeze select, body.theme-aquabreeze textarea,
+body.theme-lavender input, body.theme-lavender select, body.theme-lavender textarea,
+body.theme-solarsand input, body.theme-solarsand select, body.theme-solarsand textarea,
+body.theme-nordicsnow input, body.theme-nordicsnow select, body.theme-nordicsnow textarea,
+body.theme-crimson input, body.theme-crimson select, body.theme-crimson textarea,
+body.theme-monochrome input, body.theme-monochrome select, body.theme-monochrome textarea {
+  background-color: var(--bg-app) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* PrimeReact components overrides */
+body.theme-midnight .p-datatable .p-datatable-thead > tr > th,
+body.theme-forest .p-datatable .p-datatable-thead > tr > th,
+body.theme-oceanic .p-datatable .p-datatable-thead > tr > th,
+body.theme-sunset .p-datatable .p-datatable-thead > tr > th,
+body.theme-cyberpunk .p-datatable .p-datatable-thead > tr > th,
+body.theme-aquabreeze .p-datatable .p-datatable-thead > tr > th,
+body.theme-lavender .p-datatable .p-datatable-thead > tr > th,
+body.theme-solarsand .p-datatable .p-datatable-thead > tr > th,
+body.theme-nordicsnow .p-datatable .p-datatable-thead > tr > th,
+body.theme-crimson .p-datatable .p-datatable-thead > tr > th,
+body.theme-monochrome .p-datatable .p-datatable-thead > tr > th {
+  background: var(--bg-app) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+body.theme-midnight .p-datatable .p-datatable-tbody > tr > td,
+body.theme-forest .p-datatable .p-datatable-tbody > tr > td,
+body.theme-oceanic .p-datatable .p-datatable-tbody > tr > td,
+body.theme-sunset .p-datatable .p-datatable-tbody > tr > td,
+body.theme-cyberpunk .p-datatable .p-datatable-tbody > tr > td,
+body.theme-aquabreeze .p-datatable .p-datatable-tbody > tr > td,
+body.theme-lavender .p-datatable .p-datatable-tbody > tr > td,
+body.theme-solarsand .p-datatable .p-datatable-tbody > tr > td,
+body.theme-nordicsnow .p-datatable .p-datatable-tbody > tr > td,
+body.theme-crimson .p-datatable .p-datatable-tbody > tr > td,
+body.theme-monochrome .p-datatable .p-datatable-tbody > tr > td {
+  border-color: var(--border-light) !important;
+  color: var(--text-primary) !important;
+}
+
+body.theme-midnight .p-datatable .p-datatable-tbody > tr,
+body.theme-forest .p-datatable .p-datatable-tbody > tr,
+body.theme-oceanic .p-datatable .p-datatable-tbody > tr,
+body.theme-sunset .p-datatable .p-datatable-tbody > tr,
+body.theme-cyberpunk .p-datatable .p-datatable-tbody > tr,
+body.theme-aquabreeze .p-datatable .p-datatable-tbody > tr,
+body.theme-lavender .p-datatable .p-datatable-tbody > tr,
+body.theme-solarsand .p-datatable .p-datatable-tbody > tr,
+body.theme-nordicsnow .p-datatable .p-datatable-tbody > tr,
+body.theme-crimson .p-datatable .p-datatable-tbody > tr,
+body.theme-monochrome .p-datatable .p-datatable-tbody > tr {
+  background: var(--bg-card) !important;
+}
+
+body.theme-midnight .p-datatable .p-datatable-tbody > tr:hover,
+body.theme-forest .p-datatable .p-datatable-tbody > tr:hover,
+body.theme-oceanic .p-datatable .p-datatable-tbody > tr:hover,
+body.theme-sunset .p-datatable .p-datatable-tbody > tr:hover,
+body.theme-cyberpunk .p-datatable .p-datatable-tbody > tr:hover,
+body.theme-aquabreeze .p-datatable .p-datatable-tbody > tr:hover,
+body.theme-lavender .p-datatable .p-datatable-tbody > tr:hover,
+body.theme-solarsand .p-datatable .p-datatable-tbody > tr:hover,
+body.theme-nordicsnow .p-datatable .p-datatable-tbody > tr:hover,
+body.theme-crimson .p-datatable .p-datatable-tbody > tr:hover,
+body.theme-monochrome .p-datatable .p-datatable-tbody > tr:hover {
+  background: var(--bg-hover) !important;
+}
+
+body.theme-midnight .p-dialog-header, body.theme-midnight .p-dialog-content,
+body.theme-forest .p-dialog-header, body.theme-forest .p-dialog-content,
+body.theme-oceanic .p-dialog-header, body.theme-oceanic .p-dialog-content,
+body.theme-sunset .p-dialog-header, body.theme-sunset .p-dialog-content,
+body.theme-cyberpunk .p-dialog-header, body.theme-cyberpunk .p-dialog-content,
+body.theme-aquabreeze .p-dialog-header, body.theme-aquabreeze .p-dialog-content,
+body.theme-lavender .p-dialog-header, body.theme-lavender .p-dialog-content,
+body.theme-solarsand .p-dialog-header, body.theme-solarsand .p-dialog-content,
+body.theme-nordicsnow .p-dialog-header, body.theme-nordicsnow .p-dialog-content,
+body.theme-crimson .p-dialog-header, body.theme-crimson .p-dialog-content,
+body.theme-monochrome .p-dialog-header, body.theme-monochrome .p-dialog-content {
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+body.theme-midnight .p-dialog-footer,
+body.theme-forest .p-dialog-footer,
+body.theme-oceanic .p-dialog-footer,
+body.theme-sunset .p-dialog-footer,
+body.theme-cyberpunk .p-dialog-footer,
+body.theme-aquabreeze .p-dialog-footer,
+body.theme-lavender .p-dialog-footer,
+body.theme-solarsand .p-dialog-footer,
+body.theme-nordicsnow .p-dialog-footer,
+body.theme-crimson .p-dialog-footer,
+body.theme-monochrome .p-dialog-footer {
+  background: var(--bg-app) !important;
+  border-color: var(--border-color) !important;
+}
+
+body.theme-midnight .p-paginator,
+body.theme-forest .p-paginator,
+body.theme-oceanic .p-paginator,
+body.theme-sunset .p-paginator,
+body.theme-cyberpunk .p-paginator,
+body.theme-aquabreeze .p-paginator,
+body.theme-lavender .p-paginator,
+body.theme-solarsand .p-paginator,
+body.theme-nordicsnow .p-paginator,
+body.theme-crimson .p-paginator,
+body.theme-monochrome .p-paginator {
+  background: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+}
+
+body.theme-midnight .p-paginator button,
+body.theme-forest .p-paginator button,
+body.theme-oceanic .p-paginator button,
+body.theme-sunset .p-paginator button,
+body.theme-cyberpunk .p-paginator button,
+body.theme-aquabreeze .p-paginator button,
+body.theme-lavender .p-paginator button,
+body.theme-solarsand .p-paginator button,
+body.theme-nordicsnow .p-paginator button,
+body.theme-crimson .p-paginator button,
+body.theme-monochrome .p-paginator button {
+  color: var(--text-secondary) !important;
+}
+
+body.theme-midnight .p-paginator button:hover:not(.p-disabled),
+body.theme-forest .p-paginator button:hover:not(.p-disabled),
+body.theme-oceanic .p-paginator button:hover:not(.p-disabled),
+body.theme-sunset .p-paginator button:hover:not(.p-disabled),
+body.theme-cyberpunk .p-paginator button:hover:not(.p-disabled),
+body.theme-aquabreeze .p-paginator button:hover:not(.p-disabled),
+body.theme-lavender .p-paginator button:hover:not(.p-disabled),
+body.theme-solarsand .p-paginator button:hover:not(.p-disabled),
+body.theme-nordicsnow .p-paginator button:hover:not(.p-disabled),
+body.theme-crimson .p-paginator button:hover:not(.p-disabled),
+body.theme-monochrome .p-paginator button:hover:not(.p-disabled) {
+  background: var(--bg-hover) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+body.theme-midnight .p-paginator .p-paginator-page.p-highlight,
+body.theme-forest .p-paginator .p-paginator-page.p-highlight,
+body.theme-oceanic .p-paginator .p-paginator-page.p-highlight,
+body.theme-sunset .p-paginator .p-paginator-page.p-highlight,
+body.theme-cyberpunk .p-paginator .p-paginator-page.p-highlight,
+body.theme-aquabreeze .p-paginator .p-paginator-page.p-highlight,
+body.theme-lavender .p-paginator .p-paginator-page.p-highlight,
+body.theme-solarsand .p-paginator .p-paginator-page.p-highlight,
+body.theme-nordicsnow .p-paginator .p-paginator-page.p-highlight,
+body.theme-crimson .p-paginator .p-paginator-page.p-highlight,
+body.theme-monochrome .p-paginator .p-paginator-page.p-highlight {
+  background: var(--accent-primary) !important;
+  border-color: var(--accent-primary) !important;
+  color: #ffffff !important;
+}
+
+/* Buttons and Highlights overrides */
+body.theme-midnight button.bg-blue-600, body.theme-midnight .p-button,
+body.theme-forest button.bg-blue-600, body.theme-forest .p-button,
+body.theme-oceanic button.bg-blue-600, body.theme-oceanic .p-button,
+body.theme-sunset button.bg-blue-600, body.theme-sunset .p-button,
+body.theme-cyberpunk button.bg-blue-600, body.theme-cyberpunk .p-button,
+body.theme-aquabreeze button.bg-blue-600, body.theme-aquabreeze .p-button,
+body.theme-lavender button.bg-blue-600, body.theme-lavender .p-button,
+body.theme-solarsand button.bg-blue-600, body.theme-solarsand .p-button,
+body.theme-nordicsnow button.bg-blue-600, body.theme-nordicsnow .p-button,
+body.theme-crimson button.bg-blue-600, body.theme-crimson .p-button,
+body.theme-monochrome button.bg-blue-600, body.theme-monochrome .p-button {
+  background-color: var(--accent-primary) !important;
+  border-color: var(--accent-primary) !important;
+}
+
+body.theme-midnight button.bg-blue-600:hover, body.theme-midnight .p-button:hover,
+body.theme-forest button.bg-blue-600:hover, body.theme-forest .p-button:hover,
+body.theme-oceanic button.bg-blue-600:hover, body.theme-oceanic .p-button:hover,
+body.theme-sunset button.bg-blue-600:hover, body.theme-sunset .p-button:hover,
+body.theme-cyberpunk button.bg-blue-600:hover, body.theme-cyberpunk .p-button:hover,
+body.theme-aquabreeze button.bg-blue-600:hover, body.theme-aquabreeze .p-button:hover,
+body.theme-lavender button.bg-blue-600:hover, body.theme-lavender .p-button:hover,
+body.theme-solarsand button.bg-blue-600:hover, body.theme-solarsand .p-button:hover,
+body.theme-nordicsnow button.bg-blue-600:hover, body.theme-nordicsnow .p-button:hover,
+body.theme-crimson button.bg-blue-600:hover, body.theme-crimson .p-button:hover,
+body.theme-monochrome button.bg-blue-600:hover, body.theme-monochrome .p-button:hover {
+  background-color: var(--accent-hover) !important;
+  border-color: var(--accent-hover) !important;
+}
+
+/* Digital Meter Cards & DataTable Loaders Theme Overrides */
+.meter-card-wrapper {
+  background-color: var(--bg-card, #ffffff) !important;
+  border: 1px solid var(--border-color, #e2e8f0) !important;
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.meter-card-wrapper > div {
+  background-color: transparent !important;
+  border-color: transparent !important;
+}
+
+.meter-card-wrapper .text-slate-800,
+.meter-card-wrapper .text-slate-700 {
+  color: var(--text-primary) !important;
+}
+
+.meter-card-wrapper .text-slate-400,
+.meter-card-wrapper .text-slate-500,
+.meter-card-wrapper .text-slate-600 {
+  color: var(--text-secondary) !important;
+}
+
+.meter-card-wrapper .bg-slate-100 {
+  background-color: var(--bg-hover) !important;
+  color: var(--text-secondary) !important;
+}
+
+.meter-card-wrapper circle[stroke="#f1f5f9"] {
+  stroke: var(--border-color, rgba(255, 255, 255, 0.1)) !important;
+}
+
+.p-datatable-loading-overlay {
+  background-color: var(--bg-card) !important;
+  opacity: 0.85 !important;
+}
+
+.p-datatable-loading-icon {
+  color: var(--accent-primary) !important;
+}
+
+/* ─── Quick Insights Grid Layout ─────────────────────────────── */
+.react-grid-layout {
+  position: relative;
+}
+
+.react-grid-item {
+  transition: all 200ms ease;
+  transition-property: left, top;
+}
+
+/* Multi-edge resize handle styling and cursors */
+.react-grid-item > .react-resizable-handle {
+  position: absolute;
+  z-index: 50 !important;
+  box-sizing: border-box;
+}
+
+/* South (Bottom Edge) */
+.react-grid-item > .react-resizable-handle-s {
+  bottom: -4px; left: 14px; right: 14px; height: 12px;
+  cursor: ns-resize !important;
+}
+/* North (Top Edge) */
+.react-grid-item > .react-resizable-handle-n {
+  top: -4px; left: 14px; right: 14px; height: 12px;
+  cursor: ns-resize !important;
+}
+/* East (Right Edge) */
+.react-grid-item > .react-resizable-handle-e {
+  right: -4px; top: 14px; bottom: 14px; width: 12px;
+  cursor: ew-resize !important;
+}
+/* West (Left Edge) */
+.react-grid-item > .react-resizable-handle-w {
+  left: -4px; top: 14px; bottom: 14px; width: 12px;
+  cursor: ew-resize !important;
+}
+/* South-East (Bottom-Right Corner) */
+.react-grid-item > .react-resizable-handle-se {
+  bottom: -4px; right: -4px; width: 18px; height: 18px;
+  cursor: nwse-resize !important;
+}
+.react-grid-item > .react-resizable-handle-se::after {
+  content: ''; position: absolute; right: 4px; bottom: 4px;
+  width: 8px; height: 8px;
+  border-right: 2px solid rgba(37, 99, 235, 0.8);
+  border-bottom: 2px solid rgba(37, 99, 235, 0.8);
+}
+
+/* South-West (Bottom-Left Corner) */
+.react-grid-item > .react-resizable-handle-sw {
+  bottom: -4px; left: -4px; width: 18px; height: 18px;
+  cursor: nesw-resize !important;
+}
+.react-grid-item > .react-resizable-handle-sw::after {
+  content: ''; position: absolute; left: 4px; bottom: 4px;
+  width: 8px; height: 8px;
+  border-left: 2px solid rgba(37, 99, 235, 0.8);
+  border-bottom: 2px solid rgba(37, 99, 235, 0.8);
+}
+
+/* North-East (Top-Right Corner) */
+.react-grid-item > .react-resizable-handle-ne {
+  top: -4px; right: -4px; width: 18px; height: 18px;
+  cursor: nesw-resize !important;
+}
+.react-grid-item > .react-resizable-handle-ne::after {
+  content: ''; position: absolute; right: 4px; top: 4px;
+  width: 8px; height: 8px;
+  border-right: 2px solid rgba(37, 99, 235, 0.8);
+  border-top: 2px solid rgba(37, 99, 235, 0.8);
+}
+
+/* North-West (Top-Left Corner) */
+.react-grid-item > .react-resizable-handle-nw {
+  top: -4px; left: -4px; width: 18px; height: 18px;
+  cursor: nwse-resize !important;
+}
+.react-grid-item > .react-resizable-handle-nw::after {
+  content: ''; position: absolute; left: 4px; top: 4px;
+  width: 8px; height: 8px;
+  border-left: 2px solid rgba(37, 99, 235, 0.8);
+  border-top: 2px solid rgba(37, 99, 235, 0.8);
+}
+
+/* Hover highlights for resize handles */
+.react-grid-item > .react-resizable-handle:hover {
+  background-color: rgba(37, 99, 235, 0.2);
+  border-radius: 6px;
+}
+
+.react-grid-item.react-grid-placeholder {
+  background: var(--accent-primary, #2563eb) !important;
+  opacity: 0.15;
+  border-radius: 16px;
+  transition-duration: 100ms;
+  z-index: 2;
+}
+
+/* Drag cursor indicators */
+.react-grid-item.react-draggable-dragging {
+  cursor: grabbing !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  z-index: 30;
+}
