@@ -1,5 +1,6 @@
 import { io } from 'socket.io-client'
 import { getSession } from './auth'
+import { resolveSocketUrl } from '../utils/socketUrl'
 
 let socket = null
 
@@ -10,9 +11,7 @@ export const initSocket = () => {
   if (!session) return null
 
   const envUrl = import.meta.env.VITE_SOCKET_URL
-  const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  const defaultLocalPort = window.location.port === '5173' || window.location.port === '3000' ? '5000' : (window.location.port || '5000')
-  const socketUrl = envUrl || (isLocal ? `${window.location.protocol}//${window.location.hostname}:${defaultLocalPort}` : window.location.origin)
+  const socketUrl = resolveSocketUrl(window.location, envUrl)
   console.log('[Socket] Connecting to:', socketUrl)
   
   socket = io(socketUrl, {

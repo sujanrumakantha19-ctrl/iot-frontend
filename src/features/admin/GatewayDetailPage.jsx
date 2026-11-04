@@ -9,30 +9,13 @@ import { getSession } from '../../services/auth'
 import { showToast } from '../../utils/toast'
 import LoadingSpinner from '../../components/shared/LoadingSpinner'
 import CountdownModal from '../../components/shared/CountdownModal'
-import L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  Tooltip,
-} from 'react-leaflet'
+import GatewayNetworkPanel from '../../components/shared/GatewayNetworkPanel'
+import ActiveNetworkCard from '../../components/shared/ActiveNetworkCard'
+import TcpModeSelection from '../../components/shared/TcpModeSelection'
+import TcpGatewayWorkspace from './TcpGatewayWorkspace'
 
 const MAX_GROUP_SIZE = 50
 const MAX_GROUPS_PER_GATEWAY = 20
-
-const redPinIcon = L.divIcon({
-  className: '',
-  html: `<div style="overflow:visible"><svg viewBox="0 0 40 52" width="40" height="52" xmlns="http://www.w3.org/2000/svg">
-    <path d="M20 4C12.15 4 5.8 10.66 5.8 18.84c0 8.67 11.7 20.66 12.78 21.76.56.6 1.64.6 2.2 0 1.08-1.1 12.78-13.1 12.78-21.76C33.56 10.66 27.2 4 20 4z" fill="#e53e3e" stroke="#c53030" stroke-width="1.2"/>
-    <circle cx="20" cy="18.5" r="6" fill="#fff"/>
-    <path d="M20 44l-5-8h10l-5 8z" fill="#e53e3e" stroke="#c53030" stroke-width="1"/>
-  </svg></div>`,
-  iconSize: [40, 52],
-  iconAnchor: [20, 52],
-  popupAnchor: [0, -54],
-  tooltipAnchor: [0, -56],
-})
 
 const computeDeviceNameSpans = (rows) => {
   const map = new Map()
@@ -556,9 +539,9 @@ export default function GatewayDetailPage({ managerMode = false }) {
     { idx: 0, label: 'Device List', permKey: 'showDeviceList' },
     { idx: 1, label: 'Publish', permKey: 'showPublish' },
     { idx: 2, label: 'ReadConfig', permKey: 'showReadConfig' },
-    { idx: 3, label: 'WiFi', permKey: 'showWifi' },
+    { idx: 3, label: 'Network', permKey: 'showWifi' },
     { idx: 4, label: 'Location', permKey: 'showLocation' },
-    { idx: 5, label: 'PublishInterval', permKey: 'showPublishInterval' },
+    { idx: 5, label: 'Publish Interval', permKey: 'showPublishInterval' },
     { idx: 6, label: 'FOTA', permKey: null } // FOTA is strictly admin only!
   ], [])
 
@@ -639,10 +622,6 @@ export default function GatewayDetailPage({ managerMode = false }) {
   // Stable groupNums of groups that are deleted in DB but board hasn't confirmed yet
   const [pendingDeleteGroups, setPendingDeleteGroups] = useState(new Set())
   const [activeGroupIndex, setActiveGroupIndex] = useState(0)
-  const [wifiStatus, setWifiStatus] = useState(null)
-  const [wifiSsid, setWifiSsid] = useState('')
-  const [wifiPassword, setWifiPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
   const [locationInput, setLocationInput] = useState('')
   const [retrievedLocation, setRetrievedLocation] = useState('')
   const [settingLocation, setSettingLocation] = useState(false)
@@ -659,12 +638,10 @@ export default function GatewayDetailPage({ managerMode = false }) {
   const [fotaDownloadUrl, setFotaDownloadUrl] = useState('')
   const [copiedLink, setCopiedLink] = useState(false)
 
-  const [mapModalVisible, setMapModalVisible] = useState(false)
 
   // Action loading states
   const [publishing, setPublishing] = useState(false)
   const [readingConfig, setReadingConfig] = useState(false)
-  const [queryingWifi, setQueryingWifi] = useState(false)
   const [testing, setTesting] = useState(false)
   const [checkingVersion, setCheckingVersion] = useState(false)
   const [countdown, setCountdown] = useState({ visible: false, title: '', subtitle: '' })
@@ -672,7 +649,6 @@ export default function GatewayDetailPage({ managerMode = false }) {
   // Action refs to ensure toast notifications only pop up for the initiating user
   const publishingRef = useRef(publishing)
   const readingConfigRef = useRef(readingConfig)
-  const queryingWifiRef = useRef(queryingWifi)
   const readingLocationRef = useRef(readingLocation)
   const readingIntervalRef = useRef(readingInterval)
   const triggeringFotaRef = useRef(triggeringFota)
@@ -680,23 +656,25 @@ export default function GatewayDetailPage({ managerMode = false }) {
 
   useEffect(() => { publishingRef.current = publishing }, [publishing])
   useEffect(() => { readingConfigRef.current = readingConfig }, [readingConfig])
-  useEffect(() => { queryingWifiRef.current = queryingWifi }, [queryingWifi])
   useEffect(() => { readingLocationRef.current = readingLocation }, [readingLocation])
   useEffect(() => { readingIntervalRef.current = readingInterval }, [readingInterval])
   useEffect(() => { triggeringFotaRef.current = triggeringFota }, [triggeringFota])
   useEffect(() => { devicesListRef.current = devicesList }, [devicesList])
 
-  // Content tab state (Device List / Published / Live Read / Diff / etc.)
+  // Remember each workspace's selection independently; switching never resets edits.
   const [activeTab, setActiveTab] = useState(0)
-
-  useEffect(() => {
-    if (isManagerMode && visibleTabs.length > 0) {
-      const isValid = visibleTabs.some(t => t.idx === activeTab)
-      if (!isValid) {
-        setActiveTab(visibleTabs[0].idx)
-      }
-    }
-  }, [isManagerMode, visibleTabs, activeTab])
+  const [settingsTab, setSettingsTab] = useState(3)
+  const [protocol, setProtocol] = useState('rtu')
+  const [tcpTab, setTcpTab] = useState('Mode Selection')
+  const rtuTabs = visibleTabs.filter(tab => tab.idx < 3)
+  const settingsTabs = visibleTabs.filter(tab => tab.idx >= 3)
+  const selectedRtuTab = rtuTabs.find(tab => tab.idx === activeTab)?.idx ?? rtuTabs[0]?.idx ?? null
+  const selectedSettingsTab = settingsTabs.find(tab => tab.idx === settingsTab)?.idx ?? settingsTabs[0]?.idx ?? null
+  const workspaceTabs = protocol === 'settings' ? settingsTabs : rtuTabs
+  const activeContentTab = protocol === 'settings' ? selectedSettingsTab : selectedRtuTab
+  const tabClassName = (selected) => `px-5 py-2.5 text-xs font-bold uppercase tracking-wide cursor-pointer transition-all border-b-2 -mb-[1px] ${selected
+    ? 'border-blue-600 text-blue-700 bg-white'
+    : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300 bg-slate-50'}`
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false)
@@ -1328,34 +1306,16 @@ export default function GatewayDetailPage({ managerMode = false }) {
       }
     }
 
-    const handleWifiResponse = (data) => {
-      if (data.gatewayId === gatewayId) {
-        if (queryingWifiRef.current) {
-          showToast({ severity: 'success', summary: 'WiFi Read Success', detail: 'WiFi details updated' })
-          setQueryingWifi(false)
-          setCountdown({ visible: false, title: '', subtitle: '' })
-        }
-        try {
-          const parts = data.payload.split(',')
-          if (parts.length >= 2) {
-            setWifiSsid(parts[0]?.trim() || '')
-            setWifiPassword(parts[1]?.trim() || '')
-          }
-          if (parts.length >= 4) {
-            setWifiStatus({
-              ssid: parts[0] || 'Unknown SSID',
-              rssi: parts[1] || 'N/A',
-              ipAddress: parts[2] || 'N/A',
-              delay: parts[3] ? `${parts[3]} ms` : 'N/A'
-            })
-          }
-        } catch (err) {
-          console.error('[Socket] Failed to parse wifi response:', err)
-        }
-      }
+    const handleNetworkPhysicalResponse = (data) => {
+      if (String(data.gatewayId) !== String(gatewayId)) return
+      setGateway(prev => prev ? {
+        ...prev,
+        activeNetwork: data.activeNetwork ?? String(data.payload ?? '').trim(),
+        activeNetworkUpdatedAt: data.activeNetworkUpdatedAt || new Date().toISOString()
+      } : prev)
     }
 
-    const handleLocationResponse = async (data) => {
+    const handleLocationResponse = (data) => {
       if (data.gatewayId === gatewayId) {
         const loc = (data.payload || '').trim()
         if (readingLocationRef.current) {
@@ -1365,14 +1325,9 @@ export default function GatewayDetailPage({ managerMode = false }) {
         }
         setRetrievedLocation(loc)
 
-        if (loc) {
-          try {
-            await gatewaysApi.update(gatewayId, { location: loc })
-            setGateway(prev => ({ ...prev, location: loc }))
-          } catch (err) {
-            console.error('[Socket] Error updating location in DB:', err)
-          }
-        }
+        // MQTT saves the location before emitting this event. Update the card
+        // directly; manager accounts cannot call the admin gateway update API.
+        if (loc) setGateway(prev => prev ? { ...prev, location: loc.substring(0, 30) } : prev)
       }
     }
 
@@ -1456,7 +1411,7 @@ export default function GatewayDetailPage({ managerMode = false }) {
 
     socket.on('gateway:config-response', handleConfigResponse)
     socket.on('gateway:config-group-response', handleConfigGroupResponse)
-    socket.on('gateway:wifi-response', handleWifiResponse)
+    socket.on('gateway:network-physical-response', handleNetworkPhysicalResponse)
     socket.on('gateway:location-response', handleLocationResponse)
     socket.on('gateway:delay-response', handleDelayResponse)
     socket.on('gateway:fota-response', handleFotaResponse)
@@ -1468,7 +1423,7 @@ export default function GatewayDetailPage({ managerMode = false }) {
     return () => {
       socket.off('gateway:config-response', handleConfigResponse)
       socket.off('gateway:config-group-response', handleConfigGroupResponse)
-      socket.off('gateway:wifi-response', handleWifiResponse)
+      socket.off('gateway:network-physical-response', handleNetworkPhysicalResponse)
       socket.off('gateway:location-response', handleLocationResponse)
       socket.off('gateway:delay-response', handleDelayResponse)
       socket.off('gateway:fota-response', handleFotaResponse)
@@ -2254,7 +2209,6 @@ export default function GatewayDetailPage({ managerMode = false }) {
     }
     setCountdown({ visible: false, title: '', subtitle: '' })
     setPublishing(false)
-    setQueryingWifi(false)
     setReadingLocation(false)
     setReadingConfig(false)
     setTesting(false)
@@ -2280,23 +2234,6 @@ export default function GatewayDetailPage({ managerMode = false }) {
     } catch (err) {
       showToast({ severity: 'error', summary: 'Read Error', detail: err.message })
       setReadingConfig(false)
-      setCountdown({ visible: false, title: '', subtitle: '' })
-    }
-  }
-
-  const handleQueryWifi = async () => {
-    try {
-      setQueryingWifi(true)
-      setCountdown({
-        visible: true,
-        title: 'Reading WiFi Credentials',
-        subtitle: 'Querying Wi-Fi SSID and Password over MQTT, waiting for reply...'
-      })
-      await gatewaysApi.queryWifiStatus(gatewayId)
-      showToast({ severity: 'info', summary: 'Trigger Sent', detail: 'Requesting WiFi status details...' })
-    } catch (err) {
-      showToast({ severity: 'error', summary: 'Query Error', detail: err.message })
-      setQueryingWifi(false)
       setCountdown({ visible: false, title: '', subtitle: '' })
     }
   }
@@ -2804,10 +2741,7 @@ export default function GatewayDetailPage({ managerMode = false }) {
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Gateway ID</p>
           <p className="text-sm font-bold text-slate-800 font-mono truncate">{gateway.prefix}</p>
         </div>
-        <div className="bg-white border border-slate-200/80 p-4 space-y-1 rounded-[15px]">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Company</p>
-          <p className="text-sm font-bold text-slate-800 truncate">{company?.name || 'N/A'}</p>
-        </div>
+        <ActiveNetworkCard key={gatewayId} gateway={gateway} canQuery={!isManagerMode || !!gatewayFeatures.showWifi} />
         <div className="bg-white border border-slate-200/80 p-4 space-y-1 flex flex-col justify-between rounded-[15px]">
           <div>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Status</p>
@@ -2865,84 +2799,84 @@ export default function GatewayDetailPage({ managerMode = false }) {
             </button>
           )}
         </div>
-        <div className="bg-white border border-slate-200/80 p-4 space-y-1 rounded-[15px]">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Site Location</p>
-          <p className="text-sm font-medium text-slate-600 truncate">{gateway.location || 'No location configured'}</p>
-        </div>
-        <div className="bg-white border border-slate-200/80 rounded-[15px] overflow-hidden relative">
-          {gateway.gps?.lat != null ? (
-            <>
-              <div className="h-[100px]">
-                <MapContainer
-                  center={[Number(gateway.gps.lat), Number(gateway.gps.lng)]}
-                  zoom={5}
-                  className="w-full h-full z-0"
-                  scrollWheelZoom={false}
-                  dragging={false}
-                  zoomControl={false}
-                  attributionControl={false}
-                  maxZoom={11}
-                >
-                  <TileLayer
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  />
-                  <Marker position={[Number(gateway.gps.lat), Number(gateway.gps.lng)]} icon={redPinIcon} />
-                </MapContainer>
-              </div>
-              <button
-                onClick={() => setMapModalVisible(true)}
-                className="absolute top-1 right-1 w-7 h-7 flex items-center justify-center bg-white/90 hover:bg-white border border-slate-200 rounded-md cursor-pointer transition-colors shadow-sm z-10"
-                title="View on map"
-              >
-                <i className="pi pi-arrows-alt text-slate-600 text-[10px]" />
-              </button>
-            </>
-          ) : (
-            <div className="h-[100px] flex flex-col items-center justify-center bg-slate-50 gap-1.5 cursor-pointer" onClick={() => navigate('/admin/live-location')}>
-              <i className="pi pi-map-marker text-slate-300 text-base" />
-              <p className="text-[9px] text-slate-400 font-medium leading-tight text-center px-2">
-                No GPS configured
-              </p>
-              <span className="text-[9px] text-blue-500 hover:text-blue-700 font-bold">Go to Live Location →</span>
-            </div>
+        <div className="bg-white border border-slate-200/80 p-4 space-y-1 flex flex-col justify-between rounded-[15px]">
+          <div>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Site Location</p>
+            <p className="text-sm font-medium text-slate-600 truncate" title={gateway.location || 'No location configured'} aria-live="polite">{gateway.location || 'No location configured'}</p>
+          </div>
+          {(!isManagerMode || gatewayFeatures.showLocation) && (
+            <button type="button" onClick={handleReadLocation} disabled={readingLocation}
+              className="mt-2 text-[10px] text-blue-600 hover:text-blue-800 font-bold uppercase tracking-wider flex items-center gap-1 cursor-pointer w-fit disabled:opacity-50"
+              title="Read and save the site location from the gateway">
+              <i className={readingLocation ? 'pi pi-spin pi-spinner text-[9px]' : 'pi pi-refresh text-[9px]'} aria-hidden="true" />
+              {readingLocation ? 'Checking...' : 'Check Status'}
+            </button>
           )}
+        </div>
+        <div className="bg-white border border-slate-200/80 p-4 space-y-1 rounded-[15px]">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Company</p>
+          <p className="text-sm font-bold text-slate-800 truncate">{company?.name || 'N/A'}</p>
         </div>
       </div>
 
-      {/* WiFi status block */}
-      {wifiStatus && (
-        <div className="bg-slate-50 border border-slate-200 p-4 space-y-3">
-          <h4 className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-            <i className="pi pi-wifi text-emerald-500" />
-            Live Gateway WiFi Status
-          </h4>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-            <div><span className="text-slate-400">SSID:</span> <strong className="text-slate-700">{wifiStatus.ssid}</strong></div>
-            <div><span className="text-slate-400">Signal Strength (RSSI):</span> <strong className="text-slate-700">{wifiStatus.rssi} dBm</strong></div>
-            <div><span className="text-slate-400">IP Address:</span> <strong className="text-slate-700">{wifiStatus.ipAddress}</strong></div>
-            <div><span className="text-slate-400">Latency Delay:</span> <strong className="text-slate-700">{wifiStatus.delay}</strong></div>
-          </div>
+      {/* Gateway cards stay available across all three workspaces. */}
+      <div>
+        <div role="group" aria-label="Gateway workspace" className="flex justify-center gap-2 flex-wrap">
+          {[{ id: 'rtu', label: 'Modbus RTU', icon: 'pi pi-server' }, { id: 'tcp', label: 'Modbus TCP', icon: 'pi pi-sitemap' }, { id: 'settings', label: 'Settings', icon: 'pi pi-cog' }].map(workspace => (
+            <button key={workspace.id} type="button" aria-pressed={protocol === workspace.id}
+              aria-controls={workspace.id === 'tcp' ? 'modbus-tcp-workspace' : 'gateway-controls-workspace'}
+              onClick={() => setProtocol(workspace.id)} className="gateway-workspace-tab">
+              <span className="gateway-workspace-icon"><i className={workspace.icon} aria-hidden="true" /></span>
+              <span>{workspace.label}</span>
+            </button>
+          ))}
         </div>
-      )}
+      </div>
 
+      <section id="modbus-tcp-workspace" aria-label="Modbus TCP workspace" hidden={protocol !== 'tcp'} className="space-y-6">
+          <div className="border-b border-slate-200">
+            <div role="group" aria-label="Modbus TCP controls" className="flex gap-0 flex-wrap">
+              {['Mode Selection', 'Device List', 'Publish', 'Read'].map(label => (
+                <button key={label} type="button" aria-pressed={tcpTab === label}
+                  onClick={() => setTcpTab(label)} className={tabClassName(tcpTab === label)}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div hidden={tcpTab !== 'Mode Selection'}>
+            <TcpModeSelection key={gatewayId} gatewayId={gatewayId}
+              canPublish={!isManagerMode || !!gatewayFeatures.showPublish}
+              canRead={!isManagerMode || !!gatewayFeatures.showReadConfig} />
+          </div>
+          <div hidden={tcpTab === 'Mode Selection'}>
+            <TcpGatewayWorkspace key={gatewayId} gatewayId={gatewayId} gateway={gateway} tab={tcpTab}
+              canDevices={!isManagerMode || !!gatewayFeatures.showDeviceList}
+              canPublish={!isManagerMode || !!gatewayFeatures.showPublish}
+              canRead={!isManagerMode || !!gatewayFeatures.showReadConfig} />
+          </div>
+      </section>
+
+      {/* Keep both workspaces mounted to preserve form values and live responses. */}
+      <div id="gateway-controls-workspace" hidden={protocol === 'tcp'} className="space-y-6">
       {/* Content tabs */}
       <div className="border-b border-slate-200">
         <div className="flex gap-0 flex-wrap">
-          {visibleTabs.map((tabItem) => (
+          {workspaceTabs.map((tabItem) => (
             <button
               key={tabItem.idx}
-              onClick={() => setActiveTab(tabItem.idx)}
-              className={`px-5 py-2.5 text-xs font-bold uppercase tracking-wide cursor-pointer transition-all border-b-2 -mb-[1px] ${
-                activeTab === tabItem.idx
-                  ? 'border-blue-600 text-blue-700 bg-white'
-                  : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300 bg-slate-50'
-              }`}
+              type="button"
+              aria-pressed={activeContentTab === tabItem.idx}
+              onClick={() => protocol === 'settings' ? setSettingsTab(tabItem.idx) : setActiveTab(tabItem.idx)}
+              className={tabClassName(activeContentTab === tabItem.idx)}
             >
               {tabItem.label}
             </button>
           ))}
         </div>
       </div>
+
+      {workspaceTabs.length === 0 && <p className="p-6 text-sm text-slate-500">No controls are enabled for your account in this workspace.</p>}
 
       <div className="relative min-h-[280px]">
         {refreshing && (
@@ -2951,8 +2885,9 @@ export default function GatewayDetailPage({ managerMode = false }) {
           </div>
         )}
 
+      <div hidden={protocol !== 'rtu'}>
       {/* === TAB 0: Device List === */}
-      {activeTab === 0 && (
+      {selectedRtuTab === 0 && (
         <div className="bg-white border border-slate-200/80 p-6 space-y-6">
           {/* Header & Controls */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-4 gap-4">
@@ -3340,7 +3275,7 @@ export default function GatewayDetailPage({ managerMode = false }) {
       )}
 
       {/* === TAB 1: Publish === */}
-      {activeTab === 1 && (
+      {selectedRtuTab === 1 && (
         <div className="space-y-4">
           {/* Amber warning banner: pending publish */}
           {publishStatus === 'saved_only' && (
@@ -3610,7 +3545,7 @@ export default function GatewayDetailPage({ managerMode = false }) {
       )}
 
       {/* === TAB 2: ReadConfig === */}
-      {activeTab === 2 && (
+      {selectedRtuTab === 2 && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
@@ -3753,79 +3688,13 @@ export default function GatewayDetailPage({ managerMode = false }) {
         </div>
       )}
 
-      {/* === TAB 3: WiFi === */}
-      {activeTab === 3 && (
-        <div className="bg-white border border-slate-200/80 p-6 space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <div>
-              <h4 className="text-sm font-bold text-slate-805 flex items-center gap-2">
-                <i className="pi pi-wifi text-blue-500" />
-                WiFi Credential Query
-              </h4>
-              <p className="text-xs text-slate-400 mt-0.5">Query the Wi-Fi credentials directly from the gateway device over MQTT.</p>
-            </div>
-            <button
-              onClick={() => {
-                setWifiSsid('')
-                setWifiPassword('')
-                handleQueryWifi()
-              }}
-              disabled={queryingWifi}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold text-xs flex items-center gap-2 cursor-pointer transition-all select-none"
-            >
-              {queryingWifi ? (
-                <>
-                  <i className="pi pi-spin pi-spinner text-[10px]" />
-                  <span>Reading...</span>
-                </>
-              ) : (
-                <>
-                  <i className="pi pi-search text-[10px]" />
-                  <span>Read WiFi</span>
-                </>
-              )}
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">SSID</label>
-              <input
-                type="text"
-                value={wifiSsid}
-                readOnly
-                placeholder="Not queried yet (click Read WiFi)"
-                className="w-full h-10 border border-slate-200 px-3 text-xs bg-slate-50 font-semibold text-slate-700 focus:outline-none placeholder-slate-400 cursor-not-allowed select-all"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Password</label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={wifiPassword}
-                  readOnly
-                  placeholder="••••••••"
-                  className="w-full h-10 border border-slate-200 pl-3 pr-10 text-xs bg-slate-50 font-mono text-slate-700 focus:outline-none placeholder-slate-400 cursor-not-allowed select-all"
-                />
-                {wifiPassword && (
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(prev => !prev)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer text-xs flex items-center h-full"
-                  >
-                    <i className={showPassword ? 'pi pi-eye-slash' : 'pi pi-eye'} />
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      </div>
+      <div hidden={protocol !== 'settings'}>
+      {/* === TAB 3: Network (retains the existing manager permission) === */}
+      {selectedSettingsTab === 3 && <GatewayNetworkPanel key={gatewayId} gatewayId={gatewayId} />}
 
       {/* === TAB 4: Location === */}
-      {activeTab === 4 && (
+      {selectedSettingsTab === 4 && (
         <div className="bg-white border border-slate-200/80 p-6 space-y-8">
           {/* Section 1: Set Location */}
           <div className="space-y-4">
@@ -3918,7 +3787,7 @@ export default function GatewayDetailPage({ managerMode = false }) {
       )}
 
       {/* === TAB 5: PublishInterval === */}
-      {activeTab === 5 && (
+      {selectedSettingsTab === 5 && (
         <div className="bg-white border border-slate-200/80 p-6 space-y-8">
           {/* Section 1: Set Publish Interval */}
           <div className="space-y-4">
@@ -4010,7 +3879,7 @@ export default function GatewayDetailPage({ managerMode = false }) {
       )}
 
       {/* === TAB 6: FOTA === */}
-      {activeTab === 6 && (
+      {selectedSettingsTab === 6 && (
         <div className="bg-white border border-slate-200/80 p-6 space-y-6">
           {!fotaUnlocked ? (
             <div className="max-w-md mx-auto py-10 space-y-5 text-center">
@@ -4145,6 +4014,9 @@ export default function GatewayDetailPage({ managerMode = false }) {
           )}
         </div>
       )}
+
+      </div>
+      </div>
 
       </div>
 
@@ -4526,38 +4398,6 @@ Device1,1,Electrical,P1,4,40001,Int,1,1,None,115200,8N1`}
             </div>
           </div>
         </div>
-      )}
-
-      {gateway.gps?.lat != null && (
-        <Dialog
-          header={`${gateway.name} - GPS Location`}
-          visible={mapModalVisible}
-          onHide={() => setMapModalVisible(false)}
-          draggable={false}
-          style={{ width: '80vw', height: '80vh' }}
-        >
-          <div className="h-[65vh] w-full">
-            <MapContainer
-              center={[Number(gateway.gps.lat), Number(gateway.gps.lng)]}
-              zoom={5}
-              className="w-full h-full z-0"
-              scrollWheelZoom={true}
-              maxZoom={11}
-            >
-              <TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              <Marker position={[Number(gateway.gps.lat), Number(gateway.gps.lng)]} icon={redPinIcon}>
-                <Tooltip direction="top" offset={[0, 2]} permanent={true}>
-                  <div className="text-xs font-bold whitespace-nowrap">
-                    {gateway.name}
-                    <span className="text-slate-400 font-normal ml-1">({company?.name})</span>
-                  </div>
-                </Tooltip>
-              </Marker>
-            </MapContainer>
-          </div>
-        </Dialog>
       )}
 
       {/* Edit Max Parameters Limit Modal */}

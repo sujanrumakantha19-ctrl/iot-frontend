@@ -194,6 +194,23 @@ input, select, textarea, button, .p-inputtext, .p-button, .p-dropdown, .p-pagina
   box-shadow: none !important;
 }
 
+/* TCP cards retain their shape despite the global square button rule. */
+button.tcp-group-card {
+  border-radius: 0.5rem !important;
+  overflow: hidden;
+}
+
+.tcp-device-card,
+button.tcp-device-card {
+  border-radius: 0.75rem !important;
+}
+
+.tcp-device-card input,
+.tcp-device-card select,
+.tcp-device-card button {
+  border-radius: 0.375rem !important;
+}
+
 /* Force primary buttons to use the deep blue-900 (royal blue) theme color */
 button.bg-blue-600, .p-button {
   background-color: #1e3a8a !important; /* Deep blue-900 */
@@ -873,4 +890,54 @@ body.theme-monochrome button.bg-blue-600:hover, body.theme-monochrome .p-button:
   cursor: grabbing !important;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
   z-index: 30;
+}
+/* Gateway workspace navigation: theme-aware, distinct from the inner tabs. */
+.gateway-workspace-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 1.125rem;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0.5rem 0.5rem 0 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.gateway-workspace-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.375rem;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+
+.gateway-workspace-tab:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.gateway-workspace-tab[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--accent-primary) 9%, transparent);
+  color: var(--accent-primary);
+  border-bottom-color: var(--accent-primary);
+}
+
+.gateway-workspace-tab[aria-pressed="true"] .gateway-workspace-icon {
+  background: var(--accent-primary);
+  color: var(--accent-contrast);
+}
+
+.gateway-workspace-tab:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 3px;
 }

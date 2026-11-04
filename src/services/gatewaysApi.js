@@ -57,8 +57,20 @@ export const gatewaysApi = {
     const res = await api.post(`/gateways/${gatewayId}/read-config`, { groupCount })
     return res.data
   },
-  queryWifiStatus: async (gatewayId) => {
-    const res = await api.post(`/gateways/${gatewayId}/wifi-status`)
+  queryNetworkChoice: async (gatewayId) => {
+    const res = await api.post(`/gateways/${gatewayId}/network/user-choice`)
+    return res.data
+  },
+  queryPhysicalStatus: async (gatewayId) => {
+    const res = await api.post(`/gateways/${gatewayId}/network/physical-status`)
+    return res.data
+  },
+  publishTcpMode: async (gatewayId, port, connectivityType) => {
+    const res = await api.post(`/gateways/${gatewayId}/modbus-tcp/mode`, { port, connectivityType })
+    return res.data
+  },
+  readTcpMode: async (gatewayId) => {
+    const res = await api.post(`/gateways/${gatewayId}/modbus-tcp/mode/read`)
     return res.data
   },
   testStatus: async (gatewayId) => {

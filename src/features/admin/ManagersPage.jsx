@@ -878,7 +878,7 @@ export default function ManagersPage() {
                     { key: 'showDeviceList', label: 'Device List', icon: 'pi pi-list', desc: 'View/edit device list, edit device names, create devices' },
                     { key: 'showPublish', label: 'Publish MQTT', icon: 'pi pi-send', desc: 'Send MQTT instructions to gateway' },
                     { key: 'showReadConfig', label: 'Read Config', icon: 'pi pi-download', desc: 'Query active gateway config' },
-                    { key: 'showWifi', label: 'WiFi Status', icon: 'pi pi-wifi', desc: 'Monitor live RSSI & network latency' },
+                    { key: 'showWifi', label: 'Network', icon: 'pi pi-wifi', desc: 'Read selected network modes, priority & active interface' },
                     { key: 'showLocation', label: 'Set Location', icon: 'pi pi-map-marker', desc: 'Read and configure gateway site location' },
                     { key: 'showPublishInterval', label: 'Publish Interval', icon: 'pi pi-clock', desc: 'Adjust telemetry publish rate' },
                   ].map((item) => (
