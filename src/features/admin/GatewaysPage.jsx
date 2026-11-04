@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { DataTable } from 'primereact/datatable'
 import { Column } from 'primereact/column'
@@ -15,6 +15,7 @@ import StatusPill from '../../components/shared/StatusPill'
 import LoadingSpinner from '../../components/shared/LoadingSpinner'
 import EmptyState from '../../components/shared/EmptyState'
 import CountdownModal from '../../components/shared/CountdownModal'
+import { GATEWAY_PROTOCOLS } from '../../utils/gatewayProtocol'
 
 const PAGE_LIMIT = 10
 
@@ -28,7 +29,9 @@ export default function GatewaysPage() {
   const [initialLoading, setInitialLoading] = useState(true)
   const [dialog, setDialog] = useState(false)
   const [editing, setEditing] = useState(null)
-  const [form, setForm] = useState({ name: '', prefix: '', companyId: '', maxParameters: 1000 })
+  const [form, setForm] = useState({ name: '', prefix: '', companyId: '', maxParameters: 1000, protocol: 'all' })
+  const [saving, setSaving] = useState(false)
+  const savingRef = useRef(false)
   const [search, setSearch] = useState('')
   const [companyFilter, setCompanyFilter] = useState(null)
   const companyDebounce = useRef(null)
@@ -37,6 +40,7 @@ export default function GatewaysPage() {
   // Countdown progress indicators
   const [testingGwIds, setTestingGwIds] = useState([])
   const [countdown, setCountdown] = useState({ visible: false, title: '', subtitle: '' })
+  const closeCountdown = useCallback(() => setCountdown(prev => ({ ...prev, visible: false })), [])
 
   const handleTestAll = async (gatewayId, e) => {
     e.stopPropagation()
@@ -94,7 +98,7 @@ export default function GatewaysPage() {
 
   const openNew = () => {
     setEditing(null)
-    setForm({ name: '', prefix: '', companyId: companies[0]?._id || '', maxParameters: 1000 })
+    setForm({ name: '', prefix: '', companyId: companies[0]?._id || '', maxParameters: 1000, protocol: 'all' })
     setDialog(true)
   }
 
@@ -110,29 +114,37 @@ export default function GatewaysPage() {
       name: gw.name || '',
       prefix: gw.prefix || '',
       companyId: gw.companyId?._id || gw.companyId || '',
-      maxParameters: pCount
+      maxParameters: pCount,
+      protocol: gw.protocol || 'all'
     })
     setDialog(true)
   }
 
   const save = async () => {
+    if (savingRef.current) return
     const maxP = parseInt(form.maxParameters, 10)
     if (isNaN(maxP) || maxP < 1) {
       showToast({ severity: 'warn', summary: 'Invalid Limit', detail: 'Maximum allowed parameters must be at least 1 (greater than 0).' })
       return
     }
+    savingRef.current = true
+    setSaving(true)
+    setCountdown({ visible: true, title: 'Saving Gateway Protocol', subtitle: 'Saving the gateway and waiting for its protocol acknowledgement...' })
     try {
-      if (editing) {
-        await gatewaysApi.update(editing._id, { ...form, maxParameters: maxP })
-        showToast({ severity: 'success', summary: 'Updated', detail: 'Gateway updated', life: 2000 })
-      } else {
-        await gatewaysApi.create({ ...form, maxParameters: maxP })
-        showToast({ severity: 'success', summary: 'Created', detail: 'Gateway created', life: 2000 })
-      }
+      const result = editing
+        ? await gatewaysApi.update(editing._id, { ...form, maxParameters: maxP }, { withProtocolStatus: true })
+        : await gatewaysApi.create({ ...form, maxParameters: maxP }, { withProtocolStatus: true })
+      const confirmed = result.protocolSync?.status === 'acknowledged'
+      showToast({ severity: confirmed ? 'success' : 'warn', summary: confirmed ? 'Gateway Saved' : 'Saved — Protocol Not Confirmed',
+        detail: confirmed ? 'Gateway saved and protocol acknowledged by the board.' : result.protocolSync?.message || 'Gateway saved, but the board has not confirmed the protocol.', life: confirmed ? 3000 : 8000 })
       setDialog(false)
       load()
     } catch (err) {
       showToast({ severity: 'error', summary: 'Save failed', detail: err.message })
+    } finally {
+      savingRef.current = false
+      setSaving(false)
+      closeCountdown()
     }
   }
 
@@ -290,27 +302,37 @@ export default function GatewaysPage() {
       <Dialog
         header={editing ? 'Edit Gateway' : 'New Gateway'}
         visible={dialog}
-        onHide={() => setDialog(false)}
+        onHide={() => { if (!saving) setDialog(false) }}
         draggable={false}
         className="w-full max-w-lg"
         footer={
           <div className="flex justify-end gap-2.5 pt-2">
             <button
               onClick={() => setDialog(false)}
+              disabled={saving}
               className="px-4 py-2 border border-slate-200 text-slate-500 hover:bg-slate-50 rounded-none font-semibold text-sm cursor-pointer"
             >
               Cancel
             </button>
             <button
               onClick={save}
+              disabled={saving}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-none font-semibold text-sm cursor-pointer"
             >
-              Save
+              {saving ? 'Saving...' : 'Save'}
             </button>
           </div>
         }
       >
-        <div className="space-y-4 pt-2">
+        <fieldset disabled={saving} className="space-y-4 pt-2 min-w-0">
+          <div className="space-y-1">
+            <label htmlFor="gateway-protocol" className="text-xs font-bold text-slate-500 uppercase tracking-wide">Protocol</label>
+            <select id="gateway-protocol" value={form.protocol} onChange={event => setForm(previous => ({ ...previous, protocol: event.target.value }))}
+              className="w-full border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-600 bg-white cursor-pointer font-semibold text-slate-700">
+              {GATEWAY_PROTOCOLS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+            </select>
+            <p className="text-[10px] text-slate-400">Choose the gateway’s Modbus workspaces. Settings stays available for every protocol.</p>
+          </div>
           <div className="space-y-1">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Gateway Name</label>
             <input
@@ -376,7 +398,7 @@ export default function GatewaysPage() {
               Allocates 50 parameters per group (e.g. 70 parameters allows 2 groups: G1 with 50 params and G2 with 20 params).
             </p>
           </div>
-        </div>
+        </fieldset>
       </Dialog>
 
       {/* Centered Delete Confirmation Dialog */}
@@ -418,7 +440,7 @@ export default function GatewaysPage() {
         title={countdown.title}
         subtitle={countdown.subtitle}
         duration={10}
-        onCancel={() => setCountdown(prev => ({ ...prev, visible: false }))}
+        onCancel={closeCountdown}
       />
     </div>
   )

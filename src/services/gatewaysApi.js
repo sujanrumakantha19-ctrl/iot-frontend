@@ -14,13 +14,13 @@ export const gatewaysApi = {
     const res = await api.get(`/gateways/${gatewayId}`)
     return res.data.gateway
   },
-  create: async (data) => {
+  create: async (data, { withProtocolStatus = false } = {}) => {
     const res = await api.post('/admin/gateways', data)
-    return res.data.gateway
+    return withProtocolStatus ? res.data : res.data.gateway
   },
-  update: async (id, data) => {
+  update: async (id, data, { withProtocolStatus = false } = {}) => {
     const res = await api.put(`/admin/gateways/${id}`, data)
-    return res.data.gateway
+    return withProtocolStatus ? res.data : res.data.gateway
   },
   delete: async (id) => {
     const res = await api.delete(`/admin/gateways/${id}`)

@@ -13,6 +13,7 @@ import GatewayNetworkPanel from '../../components/shared/GatewayNetworkPanel'
 import ActiveNetworkCard from '../../components/shared/ActiveNetworkCard'
 import TcpModeSelection from '../../components/shared/TcpModeSelection'
 import TcpGatewayWorkspace from './TcpGatewayWorkspace'
+import { allowedGatewayWorkspace, gatewayWorkspaces } from '../../utils/gatewayProtocol'
 
 const MAX_GROUP_SIZE = 50
 const MAX_GROUPS_PER_GATEWAY = 20
@@ -664,7 +665,8 @@ export default function GatewayDetailPage({ managerMode = false }) {
   // Remember each workspace's selection independently; switching never resets edits.
   const [activeTab, setActiveTab] = useState(0)
   const [settingsTab, setSettingsTab] = useState(3)
-  const [protocol, setProtocol] = useState('rtu')
+  const [selectedProtocol, setProtocol] = useState('rtu')
+  const protocol = allowedGatewayWorkspace(selectedProtocol, gateway?.protocol)
   const [tcpTab, setTcpTab] = useState('Mode Selection')
   const rtuTabs = visibleTabs.filter(tab => tab.idx < 3)
   const settingsTabs = visibleTabs.filter(tab => tab.idx >= 3)
@@ -2822,7 +2824,7 @@ export default function GatewayDetailPage({ managerMode = false }) {
       {/* Gateway cards stay available across all three workspaces. */}
       <div>
         <div role="group" aria-label="Gateway workspace" className="flex justify-center gap-2 flex-wrap">
-          {[{ id: 'rtu', label: 'Modbus RTU', icon: 'pi pi-server' }, { id: 'tcp', label: 'Modbus TCP', icon: 'pi pi-sitemap' }, { id: 'settings', label: 'Settings', icon: 'pi pi-cog' }].map(workspace => (
+          {gatewayWorkspaces(gateway.protocol).map(workspace => (
             <button key={workspace.id} type="button" aria-pressed={protocol === workspace.id}
               aria-controls={workspace.id === 'tcp' ? 'modbus-tcp-workspace' : 'gateway-controls-workspace'}
               onClick={() => setProtocol(workspace.id)} className="gateway-workspace-tab">
