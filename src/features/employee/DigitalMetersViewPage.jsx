@@ -126,6 +126,40 @@ export default function DigitalMetersViewPage() {
 
   return (
     <div className="space-y-6">
+      {/* Blinking CSS Animations for Threshold Alerts */}
+      <style>{`
+        @keyframes blink-warning {
+          0%, 100% {
+            opacity: 1;
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+          }
+          50% {
+            opacity: 0.35;
+            transform: scale(1.03);
+            box-shadow: 0 0 10px 3px rgba(245, 158, 11, 0.8);
+          }
+        }
+        @keyframes blink-critical {
+          0%, 100% {
+            opacity: 1;
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8);
+          }
+          50% {
+            opacity: 0.25;
+            transform: scale(1.05);
+            box-shadow: 0 0 14px 4px rgba(239, 68, 68, 0.9);
+          }
+        }
+        .animate-blink-warning {
+          animation: blink-warning 0.9s ease-in-out infinite;
+        }
+        .animate-blink-critical {
+          animation: blink-critical 0.5s ease-in-out infinite;
+        }
+      `}</style>
+
       {/* Main Grid of Digital Meters */}
       <div className="bg-white border border-slate-200/80 p-5 space-y-4">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -152,6 +186,34 @@ export default function DigitalMetersViewPage() {
               const rawVal = meter.liveValue ?? meter.latestValue
               const status = getThresholdStatus(rawVal, meter)
               const displayVal = formatTagValue(rawVal, meter.decimal)
+              const userMeterColor = meter.meterColor || '#22c55e'
+
+              const wVal = meter.warningThreshold != null && meter.warningThreshold !== '' && !isNaN(Number(meter.warningThreshold)) ? Number(meter.warningThreshold) : null
+              const cVal = meter.criticalThreshold != null && meter.criticalThreshold !== '' && !isNaN(Number(meter.criticalThreshold)) ? Number(meter.criticalThreshold) : null
+              const isInverted = wVal !== null && cVal !== null && wVal > cVal
+
+              let isWarningCrossed = false
+              let isCriticalCrossed = false
+
+              if (rawVal !== null && rawVal !== undefined && !isNaN(Number(rawVal))) {
+                const num = Number(rawVal)
+                if (isInverted) {
+                  if (cVal !== null && !isNaN(cVal) && num <= cVal) {
+                    isCriticalCrossed = true
+                    isWarningCrossed = true
+                  } else if (wVal !== null && !isNaN(wVal) && num <= wVal) {
+                    isWarningCrossed = true
+                  }
+                } else {
+                  if (cVal !== null && !isNaN(cVal) && num >= cVal) {
+                    isCriticalCrossed = true
+                    isWarningCrossed = true
+                  } else if (wVal !== null && !isNaN(wVal) && num >= wVal) {
+                    isWarningCrossed = true
+                  }
+                }
+              }
+
               const valColor = status === 'critical' ? '#ef4444' : status === 'warning' ? '#f59e0b' : '#0f172a'
               const cardBorder = status === 'critical'
                 ? 'border-rose-400/70 shadow-lg shadow-rose-500/10 ring-1 ring-rose-400/20'
@@ -207,6 +269,48 @@ export default function DigitalMetersViewPage() {
                   </div>
                 </div>
 
+                {/* Threshold Limits Status Bar */}
+                <div className="px-4 py-2 bg-slate-50/95 border-b border-slate-100 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    <i className="pi pi-shield text-[10px] text-slate-400" />
+                    <span>Thresholds</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {/* Warning Threshold Badge */}
+                    <div
+                      title={wVal !== null ? `Warning Threshold: ${wVal} ${meter.unit || ''}` : 'Warning threshold not configured'}
+                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-mono font-bold transition-all border ${
+                        isWarningCrossed
+                          ? 'bg-amber-500 text-white border-amber-600 shadow-md shadow-amber-500/40 animate-blink-warning'
+                          : wVal !== null
+                            ? 'bg-amber-50 text-amber-700 border-amber-200/80'
+                            : 'bg-slate-100/80 text-slate-400 border-slate-200/60'
+                      }`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${isWarningCrossed ? 'bg-white' : wVal !== null ? 'bg-amber-500' : 'bg-slate-300'}`} />
+                      <span className="uppercase text-[9px] font-semibold opacity-80">Warn</span>
+                      <span>{wVal !== null ? `${wVal}${meter.unit ? ` ${meter.unit}` : ''}` : '—'}</span>
+                    </div>
+
+                    {/* Critical Threshold Badge */}
+                    <div
+                      title={cVal !== null ? `Critical Threshold: ${cVal} ${meter.unit || ''}` : 'Critical threshold not configured'}
+                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-mono font-bold transition-all border ${
+                        isCriticalCrossed
+                          ? 'bg-rose-600 text-white border-rose-700 shadow-md shadow-rose-600/40 animate-blink-critical'
+                          : cVal !== null
+                            ? 'bg-rose-50 text-rose-700 border-rose-200/80'
+                            : 'bg-slate-100/80 text-slate-400 border-slate-200/60'
+                      }`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${isCriticalCrossed ? 'bg-white' : cVal !== null ? 'bg-rose-500' : 'bg-slate-300'}`} />
+                      <span className="uppercase text-[9px] font-semibold opacity-80">Crit</span>
+                      <span>{cVal !== null ? `${cVal}${meter.unit ? ` ${meter.unit}` : ''}` : '—'}</span>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Instrument Display Canvas */}
                 <div className={`relative overflow-hidden flex-1 min-h-[260px] ${
                   meter.assignedMeterType === 'VERTICAL_BAR_IDLE' || meter.assignedMeterType === 'VERTICAL_BAR_NORMAL'
@@ -227,7 +331,7 @@ export default function DigitalMetersViewPage() {
                         min: meter.meterMin ?? 0,
                         max: meter.meterMax ?? 100,
                         idle: meter.meterIdle ?? 0,
-                        color: status === 'critical' ? '#ef4444' : status === 'warning' ? '#f59e0b' : (meter.meterColor || '#22c55e'),
+                        color: userMeterColor,
                         unit: meter.unit || '',
                         label: formatTagDisplayName(meter)
                       }}
@@ -241,7 +345,9 @@ export default function DigitalMetersViewPage() {
                       min={meter.meterMin ?? 0}
                       max={meter.meterMax ?? 100}
                       unit={meter.unit || ''}
-                      color={status === 'critical' ? '#ef4444' : status === 'warning' ? '#f59e0b' : (meter.meterColor || '#22c55e')}
+                      color={userMeterColor}
+                      warningThreshold={wVal}
+                      criticalThreshold={cVal}
                       label={formatTagDisplayName(meter)}
                     />
                   )}

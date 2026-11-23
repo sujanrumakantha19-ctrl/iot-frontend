@@ -33,12 +33,28 @@ export function parseNetworkChoice(payload) {
 
 export function parsePhysicalStatus(payload) {
   const raw = String(payload ?? '').trim()
-  const mode = normalizeNetworkMode(raw)
-  return { raw, mode, valid: mode !== null }
+  const fields = raw.split(',')
+  const mode = normalizeNetworkMode(fields[0])
+  const details = {}
+  let displayRaw = raw
+  if (mode === 'wifi') {
+    if (fields.length > 1) details.ipAddress = fields[1].trim()
+    if (fields.length > 2) details.ssid = fields[2].trim()
+    if (fields.length > 3) {
+      details.password = fields.slice(3).join(',')
+      displayRaw = `${fields.slice(0, 3).join(',')},[hidden]`
+    }
+  } else if (mode === 'eth') {
+    if (fields.length > 1) details.addressMode = fields[1].trim()
+    if (fields.length > 2) details.ipAddress = fields[2].trim()
+  } else if (mode === 'lte' && fields.length > 1) {
+    details.apn = fields.slice(1).join(',').trim()
+  }
+  return { raw, displayRaw, mode, details, valid: mode !== null }
 }
 
 export function getActiveNetworkLabel(payload) {
   if (payload === null || payload === undefined) return 'Not read yet'
   const { raw, mode } = parsePhysicalStatus(payload)
-  return ({ wifi: 'WiFi', eth: 'ETH', lte: 'LTE', none: 'None' })[mode] || raw || 'Unknown'
+  return ({ wifi: 'WiFi', eth: 'ETH', lte: 'LTE', none: 'None' })[mode] || raw.split(',')[0].trim() || 'Unknown'
 }

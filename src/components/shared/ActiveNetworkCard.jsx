@@ -61,10 +61,13 @@ export default function ActiveNetworkCard({ gateway, canQuery = true }) {
   }
 
   return (
-    <div className="bg-white border border-slate-200/80 p-4 space-y-1 flex flex-col justify-between rounded-[15px]">
+    <div
+      style={{ backgroundColor: 'var(--bg-card, #ffffff)', borderColor: 'var(--border-color, #e2e8f0)' }}
+      className="border p-4 space-y-1 flex flex-col justify-between rounded-[15px]"
+    >
       <div>
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Active Network</p>
-        <div className="flex items-center gap-2 mt-1 text-slate-800" aria-live="polite">
+        <p style={{ color: 'var(--text-secondary)' }} className="text-[10px] font-bold uppercase tracking-wide">Active Network</p>
+        <div style={{ color: 'var(--text-primary)' }} className="flex items-center gap-2 mt-1" aria-live="polite">
           {mode === 'eth' ? (
             <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 text-blue-600" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
               <path d="M4 4h16v12h-4v4H8v-4H4z" strokeLinejoin="round" />
@@ -79,7 +82,7 @@ export default function ActiveNetworkCard({ gateway, canQuery = true }) {
           <p className="text-sm font-bold truncate" title={getActiveNetworkLabel(gateway.activeNetwork)}>{getActiveNetworkLabel(gateway.activeNetwork)}</p>
         </div>
       </div>
-      {gateway.activeNetworkUpdatedAt && <p className="text-[10px] text-slate-400 font-medium" title={new Date(gateway.activeNetworkUpdatedAt).toLocaleString()}>
+      {gateway.activeNetworkUpdatedAt && <p style={{ color: 'var(--text-secondary)' }} className="text-[10px] font-medium" title={new Date(gateway.activeNetworkUpdatedAt).toLocaleString()}>
         Last read: {new Date(gateway.activeNetworkUpdatedAt).toLocaleTimeString()}
       </p>}
       {canQuery && <button type="button" disabled={checking} onClick={checkStatus}

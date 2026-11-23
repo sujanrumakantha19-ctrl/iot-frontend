@@ -4,6 +4,7 @@ import api from '../../services/axios'
 import { showToast } from '../../utils/toast'
 import LoadingSpinner from '../../components/shared/LoadingSpinner'
 import ThemePage from '../shared/ThemePage'
+import ProfileSettingsTab from '../shared/ProfileSettingsTab'
 import BackupPage from './BackupPage'
 
 export default function AdminSettingsPage() {
@@ -165,6 +166,7 @@ export default function AdminSettingsPage() {
         {/* Navigation Tabs */}
         <div className="flex gap-2 pt-2 border-b" style={{ borderColor: 'var(--border-color, rgba(226, 232, 240, 0.8))' }}>
           {[
+            { id: 'profile', label: 'Admin Profile', icon: 'pi-user' },
             { id: 'email', label: 'Email Settings', icon: 'pi-envelope' },
             { id: 'theme', label: 'Theme Customizer', icon: 'pi-palette' },
             { id: 'backup', label: 'Database Backup', icon: 'pi-download' }
@@ -192,6 +194,11 @@ export default function AdminSettingsPage() {
           })}
         </div>
       </div>
+
+      {/* TAB 0: ADMIN PROFILE */}
+      {activeTab === 'profile' && (
+        <ProfileSettingsTab />
+      )}
 
       {/* TAB 1: EMAIL SETTINGS */}
       {activeTab === 'email' && (

@@ -8,6 +8,37 @@ test('active network card displays saved interfaces with ETH for Ethernet', () =
   }
 })
 
+test('detailed physical responses keep the header interface separate from connection details', () => {
+  for (const [payload, label, mode, details] of [
+    ['WiFi,192.168.1.24,MySSID,mypassword', 'WiFi', 'wifi', { ipAddress: '192.168.1.24', ssid: 'MySSID', password: 'mypassword' }],
+    ['ETH,Dynamic,192.168.1.15', 'ETH', 'eth', { addressMode: 'Dynamic', ipAddress: '192.168.1.15' }],
+    ['ETH,Static,192.168.1.15', 'ETH', 'eth', { addressMode: 'Static', ipAddress: '192.168.1.15' }],
+    ['LTE,jionet', 'LTE', 'lte', { apn: 'jionet' }],
+    ['none', 'None', 'none', {}],
+  ]) {
+    const parsed = parsePhysicalStatus(payload)
+    assert.equal(parsed.valid, true)
+    assert.equal(parsed.mode, mode)
+    assert.deepEqual(parsed.details, details)
+    assert.equal(getActiveNetworkLabel(payload), label)
+  }
+})
+
+test('WiFi raw response preview never exposes the returned password', () => {
+  const parsed = parsePhysicalStatus('WiFi,192.168.1.24,MySSID,my,secret,password')
+  assert.equal(parsed.details.password, 'my,secret,password')
+  assert.equal(parsed.displayRaw, 'WiFi,192.168.1.24,MySSID,[hidden]')
+  assert.ok(!parsed.displayRaw.includes('secret'))
+  assert.equal(parsePhysicalStatus('WiFi,192.168.1.24,OpenWiFi,').details.password, '')
+})
+
+test('legacy and incomplete detail responses do not invent network values', () => {
+  assert.deepEqual(parsePhysicalStatus('LTE').details, {})
+  assert.deepEqual(parsePhysicalStatus('ETH,Dynamic,').details, { addressMode: 'Dynamic', ipAddress: '' })
+  assert.deepEqual(parsePhysicalStatus(' WiFi , 192.168.1.24 , MySSID ').details, { ipAddress: '192.168.1.24', ssid: 'MySSID' })
+  assert.equal(getActiveNetworkLabel('unknown,details'), 'unknown')
+})
+
 test('network parser supports every selected-mode combination and priority order', async () => {
   const modes = ['wifi', 'eth', 'lte']
   for (let mask = 1; mask < 8; mask++) {

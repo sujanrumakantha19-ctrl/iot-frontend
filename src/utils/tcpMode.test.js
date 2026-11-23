@@ -13,8 +13,14 @@ test('TCP mode read accepts Ethernet and WiFi at valid port boundaries', () => {
   }
 })
 
+test('TCP mode read also accepts firmware ETH and WIFI interface labels', () => {
+  for (const [label, expected] of [['ETH', 0], ['Ethernet', 0], ['WIFI', 1], ['wifi', 1]]) {
+    assert.deepEqual(parseTcpMode(`512,${label}`), { raw: `512,${label}`, port: 512, connectivityType: expected, valid: true })
+  }
+})
+
 test('malformed TCP mode readings do not overwrite the form with invented values', () => {
-  for (const payload of ['', null, '502', '502,', ',0', '0,0', '65536,1', '1.5,0', '502,2', '502,wifi', '502,1,extra', 'abc,0']) {
+  for (const payload of ['', null, '502', '502,', ',0', '0,0', '65536,1', '1.5,0', '502,2', '502,LTE', '502,constructor', '502,1,extra', 'abc,0']) {
     const result = parseTcpMode(payload)
     assert.equal(result.valid, false, String(payload))
     assert.equal(result.port, null)

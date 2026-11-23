@@ -277,9 +277,10 @@ body, input, select, textarea, button, table, tr, th, td, div, span, p, h1, h2, 
   --border-light: #f1f5f9;
   --text-primary: #1e293b;
   --text-secondary: #64748b;
-  --bg-hover: #f8fafc;
+  --bg-hover: #f1f5f9;
   --accent-primary: #1e3a8a;
   --accent-hover: #1e40af;
+  --accent-subtle: rgba(30, 58, 138, 0.08);
   --accent-contrast: #ffffff;
 }
 
@@ -294,6 +295,7 @@ body.theme-midnight {
   --bg-hover: #1e293b;
   --accent-primary: #3b82f6;
   --accent-hover: #60a5fa;
+  --accent-subtle: rgba(59, 130, 246, 0.15);
   --accent-contrast: #ffffff;
 }
 
@@ -308,6 +310,7 @@ body.theme-forest {
   --bg-hover: #0f3025;
   --accent-primary: #10b981;
   --accent-hover: #34d399;
+  --accent-subtle: rgba(16, 185, 129, 0.15);
   --accent-contrast: #ffffff;
 }
 
@@ -322,6 +325,7 @@ body.theme-oceanic {
   --bg-hover: #0a2e3d;
   --accent-primary: #06b6d4;
   --accent-hover: #22d3ee;
+  --accent-subtle: rgba(6, 182, 212, 0.15);
   --accent-contrast: #0f172a;
 }
 
@@ -336,6 +340,7 @@ body.theme-sunset {
   --bg-hover: #2b113c;
   --accent-primary: #c084fc;
   --accent-hover: #d8b4fe;
+  --accent-subtle: rgba(192, 132, 252, 0.15);
   --accent-contrast: #0f040d;
 }
 
@@ -350,6 +355,7 @@ body.theme-cyberpunk {
   --bg-hover: #2e2e2e;
   --accent-primary: #fbbf24;
   --accent-hover: #f59e0b;
+  --accent-subtle: rgba(251, 191, 36, 0.15);
   --accent-contrast: #0d0d0d;
 }
 
@@ -357,13 +363,14 @@ body.theme-aquabreeze {
   --bg-app: #ecfeff;
   --bg-card: #ffffff;
   --bg-sidebar: #ffffff;
-  --border-color: #cffafe;
-  --border-light: #ecfeff;
+  --border-color: #a5f3fc;
+  --border-light: #cffafe;
   --text-primary: #083344;
   --text-secondary: #0891b2;
-  --bg-hover: #f0fdfa;
+  --bg-hover: #e0f2fe;
   --accent-primary: #0891b2;
   --accent-hover: #0e7490;
+  --accent-subtle: rgba(8, 145, 178, 0.12);
   --accent-contrast: #ffffff;
 }
 
@@ -371,13 +378,14 @@ body.theme-lavender {
   --bg-app: #faf5ff;
   --bg-card: #ffffff;
   --bg-sidebar: #ffffff;
-  --border-color: #f3e8ff;
-  --border-light: #faf5ff;
+  --border-color: #e9d5ff;
+  --border-light: #f3e8ff;
   --text-primary: #3b0764;
   --text-secondary: #7c3aed;
-  --bg-hover: #fdf4ff;
+  --bg-hover: #f3e8ff;
   --accent-primary: #7c3aed;
   --accent-hover: #6d28d9;
+  --accent-subtle: rgba(124, 58, 237, 0.12);
   --accent-contrast: #ffffff;
 }
 
@@ -385,13 +393,14 @@ body.theme-solarsand {
   --bg-app: #fefaf0;
   --bg-card: #ffffff;
   --bg-sidebar: #ffffff;
-  --border-color: #f7e8cf;
-  --border-light: #fefaf0;
+  --border-color: #fed7aa;
+  --border-light: #ffedd5;
   --text-primary: #451a03;
   --text-secondary: #d97706;
-  --bg-hover: #fffbeb;
+  --bg-hover: #fef3c7;
   --accent-primary: #d97706;
   --accent-hover: #b45309;
+  --accent-subtle: rgba(217, 119, 6, 0.12);
   --accent-contrast: #ffffff;
 }
 
@@ -399,13 +408,14 @@ body.theme-nordicsnow {
   --bg-app: #f0f9ff;
   --bg-card: #ffffff;
   --bg-sidebar: #ffffff;
-  --border-color: #e0f2fe;
-  --border-light: #f0f9ff;
+  --border-color: #bae6fd;
+  --border-light: #e0f2fe;
   --text-primary: #0c4a6e;
   --text-secondary: #0284c7;
-  --bg-hover: #f0fdfa;
+  --bg-hover: #e0f2fe;
   --accent-primary: #0284c7;
   --accent-hover: #0369a1;
+  --accent-subtle: rgba(2, 132, 199, 0.12);
   --accent-contrast: #ffffff;
 }
 
@@ -420,6 +430,7 @@ body.theme-crimson {
   --bg-hover: #381418;
   --accent-primary: #dc2626;
   --accent-hover: #ef4444;
+  --accent-subtle: rgba(220, 38, 38, 0.15);
   --accent-contrast: #ffffff;
 }
 
@@ -434,6 +445,7 @@ body.theme-monochrome {
   --bg-hover: #262626;
   --accent-primary: #f5f5f5;
   --accent-hover: #ffffff;
+  --accent-subtle: rgba(255, 255, 255, 0.12);
   --accent-contrast: #121212;
 }
 
@@ -455,6 +467,31 @@ body.theme-midnight .bg-slate-200\/45, body.theme-forest .bg-slate-200\/45, body
 body.theme-aquabreeze .bg-slate-200\/45, body.theme-lavender .bg-slate-200\/45, body.theme-solarsand .bg-slate-200\/45, body.theme-nordicsnow .bg-slate-200\/45,
 body.theme-crimson .bg-slate-200\/45, body.theme-monochrome .bg-slate-200\/45 {
   background-color: var(--bg-app) !important;
+}
+
+/* Card sub-panels, table headers, dropzones, and info box backgrounds */
+body.theme-midnight .bg-slate-50, body.theme-forest .bg-slate-50, body.theme-oceanic .bg-slate-50, body.theme-sunset .bg-slate-50, body.theme-cyberpunk .bg-slate-50,
+body.theme-aquabreeze .bg-slate-50, body.theme-lavender .bg-slate-50, body.theme-solarsand .bg-slate-50, body.theme-nordicsnow .bg-slate-50,
+body.theme-crimson .bg-slate-50, body.theme-monochrome .bg-slate-50,
+body.theme-midnight .bg-slate-50\/40, body.theme-forest .bg-slate-50\/40, body.theme-oceanic .bg-slate-50\/40, body.theme-sunset .bg-slate-50\/40, body.theme-cyberpunk .bg-slate-50\/40,
+body.theme-aquabreeze .bg-slate-50\/40, body.theme-lavender .bg-slate-50\/40, body.theme-solarsand .bg-slate-50\/40, body.theme-nordicsnow .bg-slate-50\/40,
+body.theme-crimson .bg-slate-50\/40, body.theme-monochrome .bg-slate-50\/40,
+body.theme-midnight .bg-slate-50\/50, body.theme-forest .bg-slate-50\/50, body.theme-oceanic .bg-slate-50\/50, body.theme-sunset .bg-slate-50\/50, body.theme-cyberpunk .bg-slate-50\/50,
+body.theme-aquabreeze .bg-slate-50\/50, body.theme-lavender .bg-slate-50\/50, body.theme-solarsand .bg-slate-50\/50, body.theme-nordicsnow .bg-slate-50\/50,
+body.theme-crimson .bg-slate-50\/50, body.theme-monochrome .bg-slate-50\/50,
+body.theme-midnight .bg-slate-50\/70, body.theme-forest .bg-slate-50\/70, body.theme-oceanic .bg-slate-50\/70, body.theme-sunset .bg-slate-50\/70, body.theme-cyberpunk .bg-slate-50\/70,
+body.theme-aquabreeze .bg-slate-50\/70, body.theme-lavender .bg-slate-50\/70, body.theme-solarsand .bg-slate-50\/70, body.theme-nordicsnow .bg-slate-50\/70,
+body.theme-crimson .bg-slate-50\/70, body.theme-monochrome .bg-slate-50\/70,
+body.theme-midnight .bg-slate-50\/80, body.theme-forest .bg-slate-50\/80, body.theme-oceanic .bg-slate-50\/80, body.theme-sunset .bg-slate-50\/80, body.theme-cyberpunk .bg-slate-50\/80,
+body.theme-aquabreeze .bg-slate-50\/80, body.theme-lavender .bg-slate-50\/80, body.theme-solarsand .bg-slate-50\/80, body.theme-nordicsnow .bg-slate-50\/80,
+body.theme-crimson .bg-slate-50\/80, body.theme-monochrome .bg-slate-50\/80,
+body.theme-midnight .bg-slate-100, body.theme-forest .bg-slate-100, body.theme-oceanic .bg-slate-100, body.theme-sunset .bg-slate-100, body.theme-cyberpunk .bg-slate-100,
+body.theme-aquabreeze .bg-slate-100, body.theme-lavender .bg-slate-100, body.theme-solarsand .bg-slate-100, body.theme-nordicsnow .bg-slate-100,
+body.theme-crimson .bg-slate-100, body.theme-monochrome .bg-slate-100,
+body.theme-midnight .bg-slate-100\/50, body.theme-forest .bg-slate-100\/50, body.theme-oceanic .bg-slate-100\/50, body.theme-sunset .bg-slate-100\/50, body.theme-cyberpunk .bg-slate-100\/50,
+body.theme-aquabreeze .bg-slate-100\/50, body.theme-lavender .bg-slate-100\/50, body.theme-solarsand .bg-slate-100\/50, body.theme-nordicsnow .bg-slate-100\/50,
+body.theme-crimson .bg-slate-100\/50, body.theme-monochrome .bg-slate-100\/50 {
+  background-color: var(--bg-hover) !important;
 }
 
 body.theme-midnight aside, body.theme-forest aside, body.theme-oceanic aside, body.theme-sunset aside, body.theme-cyberpunk aside,
@@ -511,7 +548,13 @@ body.theme-lavender .border-slate-200, body.theme-lavender .border-slate-200\/80
 body.theme-solarsand .border-slate-200, body.theme-solarsand .border-slate-200\/80, body.theme-solarsand .border-slate-200\/60,
 body.theme-nordicsnow .border-slate-200, body.theme-nordicsnow .border-slate-200\/80, body.theme-nordicsnow .border-slate-200\/60,
 body.theme-crimson .border-slate-200, body.theme-crimson .border-slate-200\/80, body.theme-crimson .border-slate-200\/60,
-body.theme-monochrome .border-slate-200, body.theme-monochrome .border-slate-200\/80, body.theme-monochrome .border-slate-200\/60 {
+body.theme-monochrome .border-slate-200, body.theme-monochrome .border-slate-200\/80, body.theme-monochrome .border-slate-200\/60,
+body.theme-midnight .border-slate-300, body.theme-forest .border-slate-300, body.theme-oceanic .border-slate-300, body.theme-sunset .border-slate-300, body.theme-cyberpunk .border-slate-300,
+body.theme-aquabreeze .border-slate-300, body.theme-lavender .border-slate-300, body.theme-solarsand .border-slate-300, body.theme-nordicsnow .border-slate-300,
+body.theme-crimson .border-slate-300, body.theme-monochrome .border-slate-300,
+body.theme-midnight .border-slate-350, body.theme-forest .border-slate-350, body.theme-oceanic .border-slate-350, body.theme-sunset .border-slate-350, body.theme-cyberpunk .border-slate-350,
+body.theme-aquabreeze .border-slate-350, body.theme-lavender .border-slate-350, body.theme-solarsand .border-slate-350, body.theme-nordicsnow .border-slate-350,
+body.theme-crimson .border-slate-350, body.theme-monochrome .border-slate-350 {
   border-color: var(--border-color) !important;
 }
 
@@ -530,18 +573,75 @@ body.theme-monochrome .border-slate-100, body.theme-monochrome .border-slate-50 
 }
 
 /* Hover background overrides */
-body.theme-midnight .hover\:bg-slate-50:hover,
-body.theme-forest .hover\:bg-slate-50:hover,
-body.theme-oceanic .hover\:bg-slate-50:hover,
-body.theme-sunset .hover\:bg-slate-50:hover,
-body.theme-cyberpunk .hover\:bg-slate-50:hover,
-body.theme-aquabreeze .hover\:bg-slate-50:hover,
-body.theme-lavender .hover\:bg-slate-50:hover,
-body.theme-solarsand .hover\:bg-slate-50:hover,
-body.theme-nordicsnow .hover\:bg-slate-50:hover,
-body.theme-crimson .hover\:bg-slate-50:hover,
-body.theme-monochrome .hover\:bg-slate-50:hover {
+body.theme-midnight .hover\:bg-slate-50:hover, body.theme-midnight .hover\:bg-slate-100:hover,
+body.theme-forest .hover\:bg-slate-50:hover, body.theme-forest .hover\:bg-slate-100:hover,
+body.theme-oceanic .hover\:bg-slate-50:hover, body.theme-oceanic .hover\:bg-slate-100:hover,
+body.theme-sunset .hover\:bg-slate-50:hover, body.theme-sunset .hover\:bg-slate-100:hover,
+body.theme-cyberpunk .hover\:bg-slate-50:hover, body.theme-cyberpunk .hover\:bg-slate-100:hover,
+body.theme-aquabreeze .hover\:bg-slate-50:hover, body.theme-aquabreeze .hover\:bg-slate-100:hover,
+body.theme-lavender .hover\:bg-slate-50:hover, body.theme-lavender .hover\:bg-slate-100:hover,
+body.theme-solarsand .hover\:bg-slate-50:hover, body.theme-solarsand .hover\:bg-slate-100:hover,
+body.theme-nordicsnow .hover\:bg-slate-50:hover, body.theme-nordicsnow .hover\:bg-slate-100:hover,
+body.theme-crimson .hover\:bg-slate-50:hover, body.theme-crimson .hover\:bg-slate-100:hover,
+body.theme-monochrome .hover\:bg-slate-50:hover, body.theme-monochrome .hover\:bg-slate-100:hover {
   background-color: var(--bg-hover) !important;
+}
+
+/* Accent color overrides on blue text, links, icons, borders, and badges */
+body.theme-midnight .text-blue-600, body.theme-midnight .text-blue-500, body.theme-midnight .text-blue-700,
+body.theme-forest .text-blue-600, body.theme-forest .text-blue-500, body.theme-forest .text-blue-700,
+body.theme-oceanic .text-blue-600, body.theme-oceanic .text-blue-500, body.theme-oceanic .text-blue-700,
+body.theme-sunset .text-blue-600, body.theme-sunset .text-blue-500, body.theme-sunset .text-blue-700,
+body.theme-cyberpunk .text-blue-600, body.theme-cyberpunk .text-blue-500, body.theme-cyberpunk .text-blue-700,
+body.theme-aquabreeze .text-blue-600, body.theme-aquabreeze .text-blue-500, body.theme-aquabreeze .text-blue-700,
+body.theme-lavender .text-blue-600, body.theme-lavender .text-blue-500, body.theme-lavender .text-blue-700,
+body.theme-solarsand .text-blue-600, body.theme-solarsand .text-blue-500, body.theme-solarsand .text-blue-700,
+body.theme-nordicsnow .text-blue-600, body.theme-nordicsnow .text-blue-500, body.theme-nordicsnow .text-blue-700,
+body.theme-crimson .text-blue-600, body.theme-crimson .text-blue-500, body.theme-crimson .text-blue-700,
+body.theme-monochrome .text-blue-600, body.theme-monochrome .text-blue-500, body.theme-monochrome .text-blue-700 {
+  color: var(--accent-primary) !important;
+}
+
+body.theme-midnight .hover\:text-blue-800:hover, body.theme-midnight .hover\:text-blue-700:hover,
+body.theme-forest .hover\:text-blue-800:hover, body.theme-forest .hover\:text-blue-700:hover,
+body.theme-oceanic .hover\:text-blue-800:hover, body.theme-oceanic .hover\:text-blue-700:hover,
+body.theme-sunset .hover\:text-blue-800:hover, body.theme-sunset .hover\:text-blue-700:hover,
+body.theme-cyberpunk .hover\:text-blue-800:hover, body.theme-cyberpunk .hover\:text-blue-700:hover,
+body.theme-aquabreeze .hover\:text-blue-800:hover, body.theme-aquabreeze .hover\:text-blue-700:hover,
+body.theme-lavender .hover\:text-blue-800:hover, body.theme-lavender .hover\:text-blue-700:hover,
+body.theme-solarsand .hover\:text-blue-800:hover, body.theme-solarsand .hover\:text-blue-700:hover,
+body.theme-nordicsnow .hover\:text-blue-800:hover, body.theme-nordicsnow .hover\:text-blue-700:hover,
+body.theme-crimson .hover\:text-blue-800:hover, body.theme-crimson .hover\:text-blue-700:hover,
+body.theme-monochrome .hover\:text-blue-800:hover, body.theme-monochrome .hover\:text-blue-700:hover {
+  color: var(--accent-hover) !important;
+}
+
+body.theme-midnight .border-blue-600, body.theme-midnight .border-blue-500, body.theme-midnight .border-blue-400, body.theme-midnight .border-blue-300,
+body.theme-forest .border-blue-600, body.theme-forest .border-blue-500, body.theme-forest .border-blue-400, body.theme-forest .border-blue-300,
+body.theme-oceanic .border-blue-600, body.theme-oceanic .border-blue-500, body.theme-oceanic .border-blue-400, body.theme-oceanic .border-blue-300,
+body.theme-sunset .border-blue-600, body.theme-sunset .border-blue-500, body.theme-sunset .border-blue-400, body.theme-sunset .border-blue-300,
+body.theme-cyberpunk .border-blue-600, body.theme-cyberpunk .border-blue-500, body.theme-cyberpunk .border-blue-400, body.theme-cyberpunk .border-blue-300,
+body.theme-aquabreeze .border-blue-600, body.theme-aquabreeze .border-blue-500, body.theme-aquabreeze .border-blue-400, body.theme-aquabreeze .border-blue-300,
+body.theme-lavender .border-blue-600, body.theme-lavender .border-blue-500, body.theme-lavender .border-blue-400, body.theme-lavender .border-blue-300,
+body.theme-solarsand .border-blue-600, body.theme-solarsand .border-blue-500, body.theme-solarsand .border-blue-400, body.theme-solarsand .border-blue-300,
+body.theme-nordicsnow .border-blue-600, body.theme-nordicsnow .border-blue-500, body.theme-nordicsnow .border-blue-400, body.theme-nordicsnow .border-blue-300,
+body.theme-crimson .border-blue-600, body.theme-crimson .border-blue-500, body.theme-crimson .border-blue-400, body.theme-crimson .border-blue-300,
+body.theme-monochrome .border-blue-600, body.theme-monochrome .border-blue-500, body.theme-monochrome .border-blue-400, body.theme-monochrome .border-blue-300 {
+  border-color: var(--accent-primary) !important;
+}
+
+body.theme-midnight .bg-blue-50, body.theme-midnight .bg-blue-50\/50, body.theme-midnight .bg-blue-50\/70,
+body.theme-forest .bg-blue-50, body.theme-forest .bg-blue-50\/50, body.theme-forest .bg-blue-50\/70,
+body.theme-oceanic .bg-blue-50, body.theme-oceanic .bg-blue-50\/50, body.theme-oceanic .bg-blue-50\/70,
+body.theme-sunset .bg-blue-50, body.theme-sunset .bg-blue-50\/50, body.theme-sunset .bg-blue-50\/70,
+body.theme-cyberpunk .bg-blue-50, body.theme-cyberpunk .bg-blue-50\/50, body.theme-cyberpunk .bg-blue-50\/70,
+body.theme-aquabreeze .bg-blue-50, body.theme-aquabreeze .bg-blue-50\/50, body.theme-aquabreeze .bg-blue-50\/70,
+body.theme-lavender .bg-blue-50, body.theme-lavender .bg-blue-50\/50, body.theme-lavender .bg-blue-50\/70,
+body.theme-solarsand .bg-blue-50, body.theme-solarsand .bg-blue-50\/50, body.theme-solarsand .bg-blue-50\/70,
+body.theme-nordicsnow .bg-blue-50, body.theme-nordicsnow .bg-blue-50\/50, body.theme-nordicsnow .bg-blue-50\/70,
+body.theme-crimson .bg-blue-50, body.theme-crimson .bg-blue-50\/50, body.theme-crimson .bg-blue-50\/70,
+body.theme-monochrome .bg-blue-50, body.theme-monochrome .bg-blue-50\/50, body.theme-monochrome .bg-blue-50\/70 {
+  background-color: var(--accent-subtle) !important;
 }
 
 /* Input elements inside dark themes */
@@ -940,4 +1040,34 @@ body.theme-monochrome button.bg-blue-600:hover, body.theme-monochrome .p-button:
 .gateway-workspace-tab:focus-visible {
   outline: 2px solid var(--accent-primary);
   outline-offset: 3px;
+}
+
+/* Theme Customizer Preview Cards - Invariant swatches protected from active theme overrides */
+body[class*="theme-"] .theme-preview-card,
+.theme-preview-card {
+  background-color: var(--swatch-bg) !important;
+  border-color: var(--swatch-border) !important;
+  color: var(--swatch-title) !important;
+}
+
+body[class*="theme-"] .theme-preview-card .theme-preview-title,
+.theme-preview-card .theme-preview-title {
+  color: var(--swatch-title) !important;
+}
+
+body[class*="theme-"] .theme-preview-card .theme-preview-desc,
+.theme-preview-card .theme-preview-desc {
+  color: var(--swatch-desc) !important;
+}
+
+body[class*="theme-"] .theme-preview-card .theme-preview-dot,
+.theme-preview-card .theme-preview-dot {
+  background-color: var(--dot-bg) !important;
+}
+
+/* Leaflet custom div icon resets for live location pins */
+.leaflet-div-icon.custom-pin-icon,
+.leaflet-div-icon.location-hub-pin {
+  background: transparent !important;
+  border: none !important;
 }

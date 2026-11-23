@@ -385,20 +385,6 @@ export default function TelemetryPage() {
         }
       },
       grid: { top: 32, bottom: 44, left: 52, right: 65 },
-      toolbox: {
-        show: true,
-        right: 15,
-        top: 2,
-        itemSize: 13,
-        feature: {
-          dataZoom: {
-            yAxisIndex: 'none',
-            title: { zoom: 'Box Zoom', back: 'Reset Zoom' }
-          },
-          restore: { title: 'Restore' }
-        },
-        iconStyle: { borderColor: textColor }
-      },
       dataZoom: [
         {
           type: 'inside',
@@ -693,20 +679,6 @@ export default function TelemetryPage() {
             borderWidth: 1,
             borderColor: chartTheme.tooltipBorder,
             textStyle: { color: chartTheme.tooltipText, fontSize: 11 }
-          },
-          toolbox: {
-            show: true,
-            right: 15,
-            top: 2,
-            itemSize: 13,
-            feature: {
-              dataZoom: {
-                yAxisIndex: 'none',
-                title: { zoom: 'Box Zoom', back: 'Reset Zoom' }
-              },
-              restore: { title: 'Restore' }
-            },
-            iconStyle: { borderColor: chartTheme.textColor }
           },
           grid: { top: 32, bottom: 65, left: 45, right: 20 },
           xAxis: {

@@ -38,6 +38,7 @@ const managerMenuGroups = [
       { label: 'Gateways', icon: 'pi pi-server', path: '/manager/gateways' },
       { label: 'Quick Insights', icon: 'pi pi-sliders-h', path: '/manager/quick-insights' },
       { label: 'Assign', icon: 'pi pi-link', path: '/manager/assign' },
+      { label: 'Digital Meters', icon: 'pi pi-gauge', path: '/manager/digital-meters' },
       { label: 'Asset Digital Twin', icon: 'pi pi-box', path: '/manager/asset-digital-twin' },
       { label: 'Thresholds', icon: 'pi pi-exclamation-triangle', path: '/manager/thresholds' },
       { label: 'Graphs', icon: 'pi pi-chart-bar', path: '/manager/graphs' },
@@ -93,10 +94,60 @@ export default function Sidebar() {
   const [logoutConfirmVisible, setLogoutConfirmVisible] = useState(false)
   const [companyName, setCompanyName] = useState('')
   const session = getSession()
+  const [profilePhoto, setProfilePhoto] = useState(() => session?.profilePhoto || '')
+  const [userName, setUserName] = useState(() => session?.name || '')
+  const [imgError, setImgError] = useState(false)
   const [assignMode, setAssignMode] = useState(() => session?.assignPermissionMode || 'all')
   const [featurePerms, setFeaturePerms] = useState(() => session?.featurePermissions || {})
   const navigate = useNavigate()
   const location = useLocation()
+
+  useEffect(() => {
+    // Synchronize latest user profile (photo and name) on mount and route change
+    getMe()
+      .then(res => {
+        if (res?.user) {
+          const userObj = res.user
+          if (userObj.profilePhoto !== undefined) {
+            setProfilePhoto(userObj.profilePhoto || '')
+            setImgError(false)
+          }
+          if (userObj.name) {
+            setUserName(userObj.name)
+          }
+          const currentSession = getSession()
+          if (currentSession) {
+            localStorage.setItem('iot_session', JSON.stringify({
+              ...currentSession,
+              name: userObj.name || currentSession.name,
+              profilePhoto: userObj.profilePhoto || ''
+            }))
+          }
+        }
+      })
+      .catch(() => {})
+  }, [location.pathname])
+
+  useEffect(() => {
+    const handleProfileUpdated = (e) => {
+      const updatedUser = e?.detail
+      const currentSession = getSession()
+      const newPhoto = updatedUser?.profilePhoto !== undefined ? updatedUser.profilePhoto : (currentSession?.profilePhoto || '')
+      const newName = updatedUser?.name || currentSession?.name || ''
+      setProfilePhoto(newPhoto)
+      if (newName) setUserName(newName)
+      setImgError(false)
+    }
+
+    window.addEventListener('iot_user_updated', handleProfileUpdated)
+    window.addEventListener('user_profile_updated', handleProfileUpdated)
+    window.addEventListener('storage', handleProfileUpdated)
+    return () => {
+      window.removeEventListener('iot_user_updated', handleProfileUpdated)
+      window.removeEventListener('user_profile_updated', handleProfileUpdated)
+      window.removeEventListener('storage', handleProfileUpdated)
+    }
+  }, [])
 
   useEffect(() => {
     if (session?.role === 'manager') {
@@ -338,15 +389,81 @@ export default function Sidebar() {
 
   // ─── USER PROFILE ─────────────────────────────────────────────
   const renderUserProfile = (isMobile = false) => {
+    const displayName = userName || session?.name || 'User'
+    const initial = displayName.charAt(0)?.toUpperCase() || 'A'
+    const settingsPath = session?.role === 'admin' ? '/admin/settings?tab=profile' : `/${session?.role}/settings?tab=profile`
+
+    const handleProfileClick = () => {
+      if (isMobile) setMobileOpen(false)
+      navigate(settingsPath)
+    }
+
     if (collapsed && !isMobile) {
       return (
-        <div style={{ padding: '12px', borderTop: '1px solid var(--border-light, #f1f5f9)', display: 'flex', justifyContent: 'center', position: 'relative', flexShrink: 0 }}>
+        <div style={{ padding: '12px', borderTop: '1px solid var(--border-light, #f1f5f9)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', position: 'relative', flexShrink: 0 }}>
+          {profilePhoto && !imgError ? (
+            <img
+              src={profilePhoto}
+              alt={displayName}
+              onError={() => setImgError(true)}
+              onClick={handleProfileClick}
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '8px',
+                objectFit: 'cover',
+                cursor: 'pointer',
+                border: '1px solid var(--border-color, #cbd5e1)',
+                transition: 'transform 0.15s ease',
+              }}
+              title={`${displayName} (${cfg.label}) - Profile Settings`}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.05)' }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)' }}
+            />
+          ) : (
+            <div
+              onClick={handleProfileClick}
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '8px',
+                background: 'var(--accent-primary, #1e3a8a)',
+                color: 'var(--accent-contrast, #fff)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '13px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'transform 0.15s ease',
+              }}
+              title={`${displayName} (${cfg.label}) - Profile Settings`}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.05)' }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)' }}
+            >
+              {initial}
+            </div>
+          )}
           <button
             onClick={() => setLogoutConfirmVisible(true)}
-            style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--accent-primary, #1e3a8a)', color: '#ffffff', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            title={`Logout (${session?.name || 'User'})`}
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '8px',
+              background: 'transparent',
+              color: 'var(--text-secondary, #94a3b8)',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'color 0.15s ease'
+            }}
+            onMouseEnter={e => { e.currentTarget.style.color = '#ef4444' }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary, #94a3b8)' }}
+            title={`Logout (${displayName})`}
           >
-            <i className="pi pi-power-off text-sm" />
+            <i className="pi pi-power-off text-xs" />
           </button>
         </div>
       )
@@ -354,6 +471,8 @@ export default function Sidebar() {
     return (
       <div style={{ padding: '12px', borderTop: '1px solid var(--border-light, #f1f5f9)', flexShrink: 0 }}>
         <div
+          onClick={handleProfileClick}
+          title="Click to view and edit profile"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -378,16 +497,35 @@ export default function Sidebar() {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--accent-primary, #1e3a8a)', color: 'var(--accent-contrast, #fff)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, flexShrink: 0 }}>
-              {session?.name?.charAt(0)?.toUpperCase() || 'A'}
-            </div>
+            {profilePhoto && !imgError ? (
+              <img
+                src={profilePhoto}
+                alt={displayName}
+                onError={() => setImgError(true)}
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '8px',
+                  objectFit: 'cover',
+                  flexShrink: 0,
+                  border: '1px solid var(--border-color, #cbd5e1)',
+                }}
+              />
+            ) : (
+              <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--accent-primary, #1e3a8a)', color: 'var(--accent-contrast, #fff)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, flexShrink: 0 }}>
+                {initial}
+              </div>
+            )}
             <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
-              <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary, #1e293b)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{session?.name || 'Admin User'}</span>
+              <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary, #1e293b)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName}</span>
               <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-secondary, #94a3b8)', textTransform: 'capitalize', marginTop: '2px' }}>{cfg.label}</span>
             </div>
           </div>
           <button
-            onClick={() => setLogoutConfirmVisible(true)}
+            onClick={(e) => {
+              e.stopPropagation()
+              setLogoutConfirmVisible(true)
+            }}
             style={{ width: '28px', height: '28px', borderRadius: '8px', border: 'none', background: 'transparent', color: 'var(--text-secondary, #94a3b8)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'color 0.15s ease', marginLeft: 'auto' }}
             onMouseEnter={e => { e.currentTarget.style.color = '#ef4444' }}
             onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary, #94a3b8)' }}

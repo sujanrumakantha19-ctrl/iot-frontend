@@ -14,7 +14,10 @@ export default function AdminLayout() {
         className="flex-1 flex flex-col min-w-0 rounded-2xl border shadow-xs overflow-hidden min-h-0"
       >
         <TopBar title="Admin Dashboard" />
-        <main className="flex-1 overflow-y-auto scrollbar-none p-4 sm:p-6 min-h-0 select-text">
+        <main
+          style={{ backgroundColor: 'var(--bg-app, #f8fafc)' }}
+          className="flex-1 overflow-y-auto scrollbar-none p-4 sm:p-6 min-h-0 select-text"
+        >
           <Outlet />
         </main>
       </div>

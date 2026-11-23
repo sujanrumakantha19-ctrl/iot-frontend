@@ -5,6 +5,7 @@ import { tcpGatewaysApi as api } from '../../services/tcpGatewaysApi'
 import { getSocket } from '../../services/socketClient'
 import CountdownModal from '../../components/shared/CountdownModal'
 import LoadingSpinner from '../../components/shared/LoadingSpinner'
+import { parameterLimit } from '../../utils/firmwareLimits'
 import { TCP_HEADERS, importTcpRows, newTcpRow, parseTcpPayload, reconcileTcpGroups, retainTcpImportIdentities, tcpDeviceId, validateTcpDevices, validateTcpGroups } from '../../utils/tcpConfig'
 
 const field = 'border border-slate-200 rounded px-2 py-1.5 text-xs bg-white text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-600 disabled:bg-slate-50'
@@ -17,7 +18,7 @@ const statusInfo = group => group.dirty || group.publishStatus === 'draft'
 const defaultDevice = () => ({ deviceId: tcpDeviceId(), slaveId: 1, deviceName: 'Device1', ipAddress: '' })
 const freshGroup = (number, device) => ({ groupNum: number, rows: [newTcpRow(device, (number - 1) * 50 + 1)], dirty: true, publishStatus: 'draft' })
 
-export default function TcpGatewayWorkspace({ gatewayId, gateway, tab, canDevices, canPublish, canRead }) {
+export default function TcpGatewayWorkspace({ gatewayId, gateway, tab, canDevices, canPublish, canRead, isManagerMode }) {
   const [loading, setLoading] = useState(true)
   const [devices, setDevices] = useState([])
   const [groups, setGroups] = useState([])
@@ -35,16 +36,13 @@ export default function TcpGatewayWorkspace({ gatewayId, gateway, tab, canDevice
   const [importText, setImportText] = useState('')
   const [importResult, setImportResult] = useState(null)
   const [dragging, setDragging] = useState(false)
-  const [history, setHistory] = useState(null)
-  const [historySelection, setHistorySelection] = useState(null)
-  const [historyLoading, setHistoryLoading] = useState(false)
   const devicesRef = useRef(devices), groupsRef = useRef(groups)
   const pendingRef = useRef(null), readRef = useRef([]), startedAt = useRef(0)
   const loadedRef = useRef(false), mountedRef = useRef(true), savedDevicesRef = useRef('')
   const saveQueueRef = useRef(Promise.resolve()), storedGroupsRef = useRef(new Set())
   const submittedRef = useRef(new Map()), operationRef = useRef(0)
   const loadSequenceRef = useRef(0)
-  const maxParameters = gateway.maxParameters || 1000
+  const maxParameters = parameterLimit(gateway)
   const maxGroups = Math.ceil(maxParameters / 50)
   const total = groups.reduce((sum, group) => sum + group.rows.length, 0)
   const currentGroup = editor?.kind === 'read'
@@ -264,7 +262,7 @@ export default function TcpGatewayWorkspace({ gatewayId, gateway, tab, canDevice
     if (!canPublish) return
     const errors = validateTcpGroups(selected, deviceList, maxParameters)
     if (errors.length) { notify(errors[0]); return }
-    const removed = replace ? [...storedGroupsRef.current].filter(number => !selected.some(group => group.groupNum === number)) : []
+    const removed = replace ? [...storedGroupsRef.current].filter(number => number >= 1 && number <= 20 && !selected.some(group => group.groupNum === number)) : []
     if (!begin('publish', [...selected.map(group => `publish:${group.groupNum}`), ...removed.map(number => `delete:${number}`)])) return
     const sequence = operationRef.current
     const operation = pendingRef.current
@@ -372,21 +370,17 @@ export default function TcpGatewayWorkspace({ gatewayId, gateway, tab, canDevice
     { ...newTcpRow({ deviceName: 'Device1', slaveId: 1, ipAddress: '192.168.1.10' }, 1), address: 1024 },
     { ...newTcpRow({ deviceName: 'Device1', slaveId: 1, ipAddress: '192.168.1.10' }, 2), address: 1025 }
   ] }], 'template')
-  const showHistory = async () => {
-    setHistory([]); setHistoryLoading(true)
-    try { setHistory((await api.history(gatewayId)).history) } catch (error) { notify(error.message) }
-    finally { setHistoryLoading(false) }
-  }
 
   if (loading) return <LoadingSpinner text="Loading Modbus TCP configuration..." />
   if (!canDevices && !canPublish && !canRead) return <p className="text-sm text-slate-500 p-6">TCP controls are not enabled for your account.</p>
   const deviceErrors = validateTcpDevices(devices)
 
   return <div className="space-y-4">
+    {groups.some(group => group.groupNum > 20) && <p role="alert" className="border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">Firmware supports only G1–G20. Saved groups are preserved; remove unsupported groups from the database before publishing.</p>}
     {notice && <p role="status" className={`border rounded-lg p-3 text-xs ${notice.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-amber-50 border-amber-200 text-amber-800'}`}>{notice.text}</p>}
 
     <div hidden={tab !== 'Device List'}>
-      {canDevices ? <section className="bg-white border border-slate-200/80 p-5 space-y-5 rounded-xl">
+      {canDevices ? <section style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)' }} className="border p-5 space-y-5 rounded-xl">
         <div className="flex flex-wrap justify-between gap-3 items-center border-b border-slate-100 pb-4">
           <div><h3 className="text-sm font-bold text-slate-800">Gateway TCP Device Mapping</h3><p className="text-xs text-slate-500 mt-1">Each Slave ID maps to one unique IPv4 address. Valid changes save automatically.</p></div>
           <div className="flex flex-wrap items-center gap-2">
@@ -397,13 +391,13 @@ export default function TcpGatewayWorkspace({ gatewayId, gateway, tab, canDevice
         </div>
         {deviceErrors.length > 0 && <p className="text-xs text-amber-700">{deviceErrors[0]}</p>}
         <div className={deviceView === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4' : 'space-y-2'}>
-          {devices.map((device, index) => <div key={index} className={`tcp-device-card border border-slate-200 rounded-xl p-4 gap-3 ${deviceView === 'table' ? 'grid grid-cols-1 sm:grid-cols-[90px_1fr_1fr_36px] items-end' : 'grid grid-cols-2'}`}>
+          {devices.map((device, index) => <div key={index} style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)' }} className={`tcp-device-card border rounded-xl p-4 gap-3 ${deviceView === 'table' ? 'grid grid-cols-1 sm:grid-cols-[90px_1fr_1fr_36px] items-end' : 'grid grid-cols-2'}`}>
             <label className="space-y-1"><span className="text-[10px] uppercase font-bold text-slate-400">Slave ID</span><input aria-label={`TCP device ${index + 1} Slave ID`} type="number" min="1" max="247" className={`${field} w-full`} value={device.slaveId} disabled={!!pending} onChange={event => changeDevice(index, 'slaveId', event.target.value === '' ? '' : Number(event.target.value))} /></label>
             <label className="space-y-1"><span className="text-[10px] uppercase font-bold text-slate-400">Device Name</span><input aria-label={`TCP device ${index + 1} name`} className={`${field} w-full`} value={device.deviceName} disabled={!!pending} onChange={event => changeDevice(index, 'deviceName', event.target.value)} /></label>
             <label className={`space-y-1 ${deviceView === 'grid' ? 'col-span-2' : ''}`}><span className="text-[10px] uppercase font-bold text-slate-400">IP Address</span><input aria-label={`TCP device ${index + 1} IP address`} inputMode="decimal" placeholder="192.168.1.10" className={`${field} w-full`} value={device.ipAddress} disabled={!!pending} onChange={event => changeDevice(index, 'ipAddress', event.target.value.trim())} /></label>
             <button type="button" aria-label={`Delete TCP device ${device.deviceName}`} className={`${secondary} ${deviceView === 'grid' ? 'col-span-2 justify-center' : 'justify-center px-2'}`} disabled={!!pending || devices.length <= 1} onClick={() => setConfirmation({ kind: 'device', index })}><i className="pi pi-trash text-red-500" aria-hidden="true" />{deviceView === 'grid' ? 'Remove Device' : ''}</button>
           </div>)}
-          {deviceView === 'grid' && <button type="button" onClick={addDevice} disabled={!!pending} className="tcp-device-card border-2 border-dashed border-slate-200 enabled:hover:border-blue-400 p-6 flex flex-col items-center justify-center cursor-pointer enabled:hover:bg-blue-50/30 transition-all text-center min-h-[130px] disabled:opacity-50 disabled:cursor-not-allowed">
+          {deviceView === 'grid' && <button type="button" onClick={addDevice} disabled={!!pending} className="tcp-device-card border-2 border-dashed border-[var(--border-color)] enabled:hover:border-blue-400 p-6 flex flex-col items-center justify-center cursor-pointer enabled:hover:bg-blue-50/30 transition-all text-center min-h-[130px] disabled:opacity-50 disabled:cursor-not-allowed">
             <span className="w-8 h-8 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center mb-2"><i className="pi pi-plus text-xs" aria-hidden="true" /></span>
             <span className="text-xs font-bold text-slate-600">Add New Device</span>
             <span className="text-[10px] text-slate-400 mt-0.5">Configure Slave ID, Device Name &amp; IP Address</span>
@@ -420,9 +414,8 @@ export default function TcpGatewayWorkspace({ gatewayId, gateway, tab, canDevice
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
           <div><h3 className="text-xs uppercase font-bold tracking-wide text-slate-500">Modbus TCP Groups</h3><p className="text-[11px] text-slate-400 mt-1">{total} / {maxParameters} parameters · {groups.length} / {maxGroups} groups</p></div>
           <div className="flex flex-wrap gap-2">
-            <button type="button" className={secondary} onClick={showHistory} disabled={!canRead}>Config History</button>
             <button type="button" className={secondary} disabled={!groups.length} onClick={() => exportGroups(groups, 'config')}><i className="pi pi-file-excel text-emerald-600" aria-hidden="true" />Export Excel</button>
-            <button type="button" className={secondary} disabled={!canDevices || !!pending} onClick={() => { setShowImport(true); setImportText(''); setImportResult(null) }}>Upload Excel Data</button>
+            <button type="button" className={secondary} disabled={!canDevices || !!pending} onClick={() => { setShowImport(true); setImportText(''); setImportResult(null) }}><i className="pi pi-file-excel text-emerald-600" aria-hidden="true" />Upload Excel Data</button>
           </div>
         </div>
         <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 space-y-2">
@@ -481,31 +474,219 @@ export default function TcpGatewayWorkspace({ gatewayId, gateway, tab, canDevice
         : confirmation && <div className="space-y-4"><p className="text-xs text-slate-600">Remove {devices[confirmation.index]?.deviceName}? Its linked TCP parameters will also be removed and the updated configuration published. RTU devices and parameters are unaffected.</p><div className="flex justify-end gap-2"><button type="button" className={secondary} onClick={() => setConfirmation(null)}>Cancel</button><button type="button" className={primary} onClick={() => removeDevice(confirmation.index)}>Delete Device & Linked Data</button></div></div>}
     </Dialog>
 
-    <Dialog header="Import TCP Devices & Parameter Groups" visible={showImport} onHide={() => setShowImport(false)} draggable={false} style={{ width: '95vw', maxWidth: 1100 }}>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <div className="space-y-4">
-          <p className="text-xs text-slate-500">Import replaces the TCP editing workspace. Device IPs save immediately; publish the groups to update the board.</p>
-          <button type="button" className={secondary} onClick={template}>Download Template</button>
-          <label className={`block p-6 text-center border-2 border-dashed rounded-lg text-xs cursor-pointer ${dragging ? 'border-blue-400 bg-blue-50' : 'border-slate-200'}`} onDragOver={event => { event.preventDefault(); setDragging(true) }} onDragLeave={() => setDragging(false)} onDrop={event => { event.preventDefault(); setDragging(false); processFile(event.dataTransfer.files?.[0]) }}>
-            Choose Excel/CSV File or Drag & Drop<input type="file" accept=".xlsx,.xls,.csv" className="block mt-3 w-full text-xs" onChange={event => { processFile(event.target.files?.[0]); event.target.value = '' }} />
-          </label>
-          <label className="block text-xs font-bold text-slate-600">Or paste CSV<textarea className={`${field} mt-2 w-full font-mono`} rows="9" value={importText} onChange={event => parseImport(event.target.value)} placeholder={TCP_HEADERS.join(',')} /></label>
-        </div>
-        <div className="space-y-3 max-h-[420px] overflow-auto">
-          {importResult?.errors?.map(error => <p key={error} className="p-2 bg-red-50 text-red-700 text-xs rounded">{error}</p>)}
-          {importResult && !importResult.errors.length && <p className="text-xs text-emerald-700">Ready to import {importResult.groups.reduce((sum, group) => sum + group.rows.length, 0)} TCP parameters.</p>}
-          {importResult?.groups?.map(group => <div key={group.groupNum} className="border border-slate-200 rounded p-3 text-xs"><strong>G{group.groupNum}</strong><p className="mt-1 text-slate-500">{group.rows.map(row => row.parameterName).join(', ')}</p></div>)}
+    {/* Excel/CSV Upload Modal for Modbus TCP matching RTU UI */}
+    {showImport && (
+      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+        <div className="bg-white w-[90vw] max-w-[900px] h-[85vh] flex flex-col shadow-2xl border border-slate-200 rounded-xl overflow-hidden animate-fade-in">
+          {/* Header */}
+          <div className="flex items-center justify-between p-5 border-b border-slate-100 shrink-0 bg-slate-50">
+            <div>
+              <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                <i className="pi pi-file-excel text-emerald-600 text-sm" />
+                Import TCP Devices & Parameter Groups via Excel/CSV
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Upload an Excel spreadsheet (.xlsx, .xls) or CSV file, or manually paste CSV rows to auto-generate mapping and groups.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setShowImport(false)
+                setImportText('')
+                setImportResult(null)
+              }}
+              className="w-8 h-8 flex items-center justify-center border border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer transition-all shrink-0"
+              title="Close"
+            >
+              <i className="pi pi-times text-xs" />
+            </button>
+          </div>
+
+          {/* Split Body */}
+          <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0">
+            {/* Left Pane: Config Inputs */}
+            <div className="w-full lg:w-1/2 p-5 border-r border-slate-100 overflow-y-auto space-y-4">
+              
+              {/* Template Download Card */}
+              <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3 flex items-center justify-between gap-3">
+                <div className="space-y-1">
+                  <span className="text-[11px] font-bold text-slate-700 block">Download Excel Format</span>
+                  <p className="text-[10px] text-slate-400 leading-normal">
+                    Get the Excel TCP template with correct headers, IP addresses, and sample values.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={template}
+                  className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] uppercase tracking-wider rounded-lg shadow-sm flex items-center gap-1.5 cursor-pointer shrink-0"
+                >
+                  <i className="pi pi-download text-[10px]" />
+                  Download Template
+                </button>
+              </div>
+
+              {/* File Upload Dropzone */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Upload Spreadsheet (.xlsx, .xls, .csv)</label>
+                <label
+                  onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); setDragging(true) }}
+                  onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragging(true) }}
+                  onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setDragging(false) }}
+                  onDrop={(e) => {
+                    e.preventDefault(); e.stopPropagation(); setDragging(false)
+                    const file = e.dataTransfer.files?.[0]
+                    if (file) processFile(file)
+                  }}
+                  className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all text-center ${
+                    dragging
+                      ? 'border-blue-500 bg-blue-50/50 ring-2 ring-blue-300 scale-[1.01]'
+                      : 'border-slate-200 hover:border-blue-400 hover:bg-blue-50/20'
+                  }`}
+                >
+                  <i className={`pi ${dragging ? 'pi-arrow-circle-down text-blue-600 scale-125' : 'pi-cloud-upload text-slate-400'} text-2xl mb-2 transition-all`} />
+                  <span className="text-xs font-bold text-slate-700">
+                    {dragging ? 'Drop spreadsheet file here' : 'Choose File or Drag & Drop'}
+                  </span>
+                  <span className="text-[10px] text-slate-400 mt-1">Supports Excel (.xlsx, .xls) and CSV (.csv) files</span>
+                  <input
+                    type="file"
+                    accept=".csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) processFile(file)
+                      e.target.value = ''
+                    }}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+
+              {/* Manual Paste Text Area */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Or Paste CSV Data Manually</label>
+                <textarea
+                  rows={7}
+                  value={importText}
+                  onChange={(e) => parseImport(e.target.value)}
+                  placeholder={TCP_HEADERS.join(',')}
+                  className="w-full border border-slate-200 rounded-lg p-3 text-xs font-mono font-semibold text-slate-700 focus:ring-1 focus:ring-blue-600 focus:outline-none bg-slate-50 focus:bg-white"
+                />
+              </div>
+
+            </div>
+
+            {/* Right Pane: Validation Output & Previews */}
+            <div className="w-full lg:w-1/2 p-5 bg-slate-50/50 overflow-y-auto flex flex-col min-h-0">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2 shrink-0">Validation Status & Preview</label>
+              
+              {/* Error Alerts */}
+              {importResult?.errors && importResult.errors.length > 0 && (
+                <div className="bg-red-50 border border-red-200/80 p-4 rounded-xl space-y-2 mb-3 shrink-0">
+                  <h4 className="text-xs font-bold text-red-800 flex items-center gap-1.5">
+                    <i className="pi pi-exclamation-triangle" />
+                    Critical Errors Found ({importResult.errors.length})
+                  </h4>
+                  <div className="max-h-[140px] overflow-y-auto space-y-1 pr-1">
+                    {importResult.errors.map((err, idx) => (
+                      <p key={idx} className="text-[10px] text-red-700 font-semibold font-mono leading-relaxed bg-white border border-red-100 p-1.5 rounded">
+                        {err}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {!importResult || (!importResult.groups?.length && !importResult.errors?.length) ? (
+                <div className="flex-1 flex flex-col items-center justify-center text-center text-slate-400 border border-dashed border-slate-200 rounded-xl bg-white p-8">
+                  <i className="pi pi-file-import text-3xl text-slate-350 mb-2" />
+                  <span className="text-xs font-bold">No Data Loaded</span>
+                  <p className="text-[10px] text-slate-400 max-w-[260px] mt-1">
+                    Upload an Excel (.xlsx, .xls) or CSV file, or drag and drop a file, or paste raw data on the left to activate parser.
+                  </p>
+                </div>
+              ) : (
+                <div className="flex-1 flex flex-col min-h-0 space-y-4">
+                  {/* Success Overview */}
+                  {(!importResult.errors || importResult.errors.length === 0) && (
+                    <div className="bg-emerald-50 border border-emerald-200/60 p-4 rounded-xl shrink-0">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                          <i className="pi pi-check text-xs" />
+                        </div>
+                        <div>
+                          <span className="text-xs font-bold text-emerald-800">Format Validated Successfully</span>
+                          <span className="text-[10px] text-emerald-600 block mt-0.5 font-medium">
+                            Ready to import {importResult.groups.reduce((sum, g) => sum + g.rows.length, 0)} TCP parameters across {importResult.groups.length} groups.
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Preview Table */}
+                  <div className="flex-1 flex flex-col border border-slate-200 rounded-xl bg-white overflow-hidden min-h-0 font-sans">
+                    <span className="text-[10px] font-bold text-slate-500 bg-slate-50 p-2.5 border-b border-slate-200 block shrink-0">
+                      Data Preview ({importResult.groups.reduce((sum, g) => sum + g.rows.length, 0)} Rows)
+                    </span>
+                    <div className="flex-1 overflow-auto text-[10px]">
+                      <table className="min-w-full divide-y divide-slate-100">
+                        <thead className="bg-slate-50 text-[9px] text-slate-400 font-bold uppercase tracking-wider sticky top-0 z-10">
+                          <tr>
+                            <th className="p-2 text-left bg-slate-50">Device</th>
+                            <th className="p-2 text-left bg-slate-50">IP Address</th>
+                            <th className="p-2 text-left bg-slate-50">Slave</th>
+                            <th className="p-2 text-left bg-slate-50">Group</th>
+                            <th className="p-2 text-left bg-slate-50">Param</th>
+                            <th className="p-2 text-left bg-slate-50">Addr</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 font-medium">
+                          {importResult.groups.flatMap(g => g.rows.map(r => ({ ...r, groupNum: g.groupNum }))).map((r, idx) => (
+                            <tr key={idx} className="hover:bg-slate-50">
+                              <td className="p-2 text-slate-700">{r.deviceName}</td>
+                              <td className="p-2 text-slate-500 font-mono">{r.ipAddress || devices.find(d => Number(d.slaveId) === Number(r.slaveId))?.ipAddress || '-'}</td>
+                              <td className="p-2 text-slate-500 font-mono">{r.slaveId}</td>
+                              <td className="p-2 text-slate-500">G{r.groupNum}</td>
+                              <td className="p-2 text-blue-600 font-semibold">{r.parameterName}</td>
+                              <td className="p-2 text-slate-600 font-mono">{r.address}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="border-t border-slate-100 p-4 flex items-center justify-between shrink-0 bg-slate-50">
+            <button
+              type="button"
+              onClick={() => {
+                setShowImport(false)
+                setImportText('')
+                setImportResult(null)
+              }}
+              className="px-4 py-2 border border-slate-350 hover:bg-slate-100 text-slate-600 font-bold text-xs cursor-pointer transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={!importResult || !!importResult.errors?.length || !importResult.groups?.length}
+              onClick={applyImport}
+              className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold text-xs flex items-center gap-2 cursor-pointer transition-all shadow-sm select-none"
+            >
+              <i className="pi pi-check-circle text-xs" />
+              <span>Import TCP Configuration ({importResult?.groups?.reduce((sum, g) => sum + g.rows.length, 0) || 0} Params)</span>
+            </button>
+          </div>
         </div>
       </div>
-      <div className="flex justify-end gap-2 pt-4 mt-4 border-t border-slate-100"><button type="button" className={secondary} onClick={() => setShowImport(false)}>Cancel</button><button type="button" className={primary} disabled={!importResult || !!importResult.errors.length || !importResult.groups.length} onClick={applyImport}>Import TCP Configuration</button></div>
-    </Dialog>
-
-    <Dialog header="TCP Configuration History" visible={history !== null} onHide={() => { setHistory(null); setHistorySelection(null) }} draggable={false} style={{ width: '95vw', maxWidth: 1200 }}>
-      {historyLoading ? <LoadingSpinner text="Loading TCP history..." /> : <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-4">
-        <div className="space-y-2 max-h-[480px] overflow-auto">{history?.map(config => <button key={config._id} type="button" onClick={() => setHistorySelection(config)} className="w-full border border-slate-200 rounded p-3 text-left hover:bg-blue-50 text-xs cursor-pointer"><strong>v{config.version} · {config.groupCount} groups</strong><p className="text-slate-500 mt-1">{new Date(config.createdAt).toLocaleString()}</p><p className="text-slate-500">{config.publishStatus}</p></button>)}{!history?.length && <p className="text-xs text-slate-400">No TCP configuration history yet.</p>}</div>
-        <div className="space-y-4 max-h-[480px] overflow-auto">{historySelection?.groups?.map(group => <div key={group.groupNum}><h4 className="text-xs font-bold mb-2">G{group.groupNum} · {group.rows.length} parameters</h4><TcpConfigTable rows={group.rows} devices={devices} readOnly /></div>) || <p className="text-xs text-slate-400">Select a saved TCP configuration.</p>}</div>
-      </div>}
-    </Dialog>
+    )}
     <CountdownModal visible={!!pending} title={pending === 'read' ? 'Reading TCP Configuration' : pending === 'delete' ? 'Deleting TCP Group' : 'Publishing TCP Configuration'} subtitle={pending === 'read' ? 'Waiting for TCP group responses from the gateway...' : 'Waiting for board acknowledgement for every requested group...'} duration={10} onCancel={stopWaiting} />
   </div>
 }

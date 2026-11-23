@@ -123,8 +123,8 @@ export default function GatewaysPage() {
   const save = async () => {
     if (savingRef.current) return
     const maxP = parseInt(form.maxParameters, 10)
-    if (isNaN(maxP) || maxP < 1) {
-      showToast({ severity: 'warn', summary: 'Invalid Limit', detail: 'Maximum allowed parameters must be at least 1 (greater than 0).' })
+    if (isNaN(maxP) || maxP < 1 || maxP > 1000) {
+      showToast({ severity: 'warn', summary: 'Invalid Limit', detail: 'Maximum allowed parameters must be between 1 and 1000 (G1–G20).' })
       return
     }
     savingRef.current = true
@@ -375,12 +375,12 @@ export default function GatewaysPage() {
           <div className="space-y-1">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Maximum Allowed Parameters</label>
-              <span className="text-[10px] font-semibold text-slate-400">Default: 1000 (1–5000)</span>
+              <span className="text-[10px] font-semibold text-slate-400">Default: 1000 (1–1000)</span>
             </div>
             <input
               type="number"
               min={1}
-              max={5000}
+              max={1000}
               value={form.maxParameters !== undefined && form.maxParameters !== null ? form.maxParameters : ''}
               onChange={(e) => {
                 const val = e.target.value

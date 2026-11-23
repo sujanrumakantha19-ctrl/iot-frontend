@@ -46,25 +46,8 @@ function applyZoomToOption(option, containerHeight, enableZoom) {
   }
   enhanced.dataZoom = dataZoom
 
-  // 2. Toolbox (Box zoom selection & reset)
-  if (!enhanced.toolbox && !isCompact) {
-    enhanced.toolbox = {
-      show: true,
-      right: 10,
-      top: 2,
-      itemSize: 12,
-      feature: {
-        dataZoom: {
-          yAxisIndex: 'none',
-          title: { zoom: 'Box Zoom', back: 'Reset Zoom' }
-        },
-        restore: { title: 'Restore' }
-      },
-      iconStyle: {
-        borderColor: '#94a3b8'
-      }
-    }
-  }
+  // 2. Disable toolbox icons across all charts
+  enhanced.toolbox = { show: false }
 
   // 3. Grid bottom adjustment so slider doesn't collide with x-axis labels
   if (!isCompact && !hasSlider) {

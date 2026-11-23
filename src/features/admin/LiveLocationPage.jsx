@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback, Fragment } from 'react'
 import { Dialog } from 'primereact/dialog'
 import { getSocket } from '../../services/socketClient'
 import { gatewaysApi } from '../../services/gatewaysApi'
@@ -13,20 +13,209 @@ import {
   Popup,
   Tooltip,
   useMap,
+  Polyline,
 } from 'react-leaflet'
 
-const redPinIcon = L.divIcon({
-  className: '',
-  html: `<svg viewBox="0 0 40 52" width="40" height="52" xmlns="http://www.w3.org/2000/svg">
-    <path d="M20 4C12.15 4 5.8 10.66 5.8 18.84c0 8.67 11.7 20.66 12.78 21.76.56.6 1.64.6 2.2 0 1.08-1.1 12.78-13.1 12.78-21.76C33.56 10.66 27.2 4 20 4z" fill="#e53e3e" stroke="#c53030" stroke-width="1.2"/>
-    <circle cx="20" cy="18.5" r="6" fill="#fff"/>
-    <path d="M20 44l-5-8h10l-5 8z" fill="#e53e3e" stroke="#c53030" stroke-width="1"/>
-  </svg>`,
-  iconSize: [40, 52],
-  iconAnchor: [20, 52],
-  popupAnchor: [0, -54],
-  tooltipAnchor: [0, -56],
-})
+const createPinIcon = (status, indexBadge = null) => {
+  const isOnline = status === 'online'
+  const mainColor = isOnline ? '#10b981' : '#e53e3e'
+  const strokeColor = isOnline ? '#059669' : '#c53030'
+
+  return L.divIcon({
+    className: 'custom-pin-icon',
+    html: `
+      <div style="position: relative; width: 38px; height: 50px; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.28));">
+        <svg viewBox="0 0 40 52" width="38" height="50" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 4C12.15 4 5.8 10.66 5.8 18.84c0 8.67 11.7 20.66 12.78 21.76.56.6 1.64.6 2.2 0 1.08-1.1 12.78-13.1 12.78-21.76C33.56 10.66 27.2 4 20 4z" fill="${mainColor}" stroke="${strokeColor}" stroke-width="1.2"/>
+          <circle cx="20" cy="18.5" r="7" fill="#ffffff"/>
+          <circle cx="20" cy="18.5" r="4.2" fill="${mainColor}"/>
+          <path d="M20 44l-4.5-7h9l-4.5 7z" fill="${mainColor}" stroke="${strokeColor}" stroke-width="1"/>
+        </svg>
+        ${indexBadge ? `
+          <span style="position: absolute; top: -3px; right: -3px; background: #1e293b; color: #ffffff; border: 1.5px solid #ffffff; font-size: 9px; font-weight: 800; border-radius: 9999px; width: 17px; height: 17px; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">
+            ${indexBadge}
+          </span>
+        ` : ''}
+      </div>
+    `,
+    iconSize: [38, 50],
+    iconAnchor: [19, 50],
+    popupAnchor: [0, -52],
+    tooltipAnchor: [0, -54],
+  })
+}
+
+const createHubIcon = (count, hasOnline) => {
+  const bgFill = hasOnline ? '#2563eb' : '#475569'
+  const strokeFill = hasOnline ? '#1d4ed8' : '#334155'
+
+  return L.divIcon({
+    className: 'location-hub-pin',
+    html: `
+      <div style="position: relative; width: 44px; height: 56px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.32));">
+        <svg viewBox="0 0 40 52" width="44" height="56" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 4C12.15 4 5.8 10.66 5.8 18.84c0 8.67 11.7 20.66 12.78 21.76.56.6 1.64.6 2.2 0 1.08-1.1 12.78-13.1 12.78-21.76C33.56 10.66 27.2 4 20 4z" fill="${bgFill}" stroke="${strokeFill}" stroke-width="1.4"/>
+          <circle cx="20" cy="18.5" r="9.5" fill="#ffffff"/>
+          <path d="M20 44l-5-8h10l-5 8z" fill="${bgFill}" stroke="${strokeFill}" stroke-width="1"/>
+        </svg>
+        <div style="position: absolute; top: 9px; left: 12px; width: 20px; height: 20px; border-radius: 50%; background: ${bgFill}; color: #ffffff; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; font-family: monospace;">
+          ${count > 99 ? '99+' : count}
+        </div>
+        <div style="position: absolute; top: -3px; right: -4px; background: #f59e0b; color: #ffffff; border: 1.5px solid #ffffff; font-size: 8px; font-weight: 800; border-radius: 9999px; padding: 1px 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.25); letter-spacing: 0.5px;">
+          HUB
+        </div>
+      </div>
+    `,
+    iconSize: [44, 56],
+    iconAnchor: [22, 56],
+    popupAnchor: [0, -58],
+    tooltipAnchor: [0, -60],
+  })
+}
+
+function SingleGatewayPopupContent({ gw, loadingGps, handleGetGps }) {
+  return (
+    <div className="min-w-[190px] space-y-2">
+      <div className="font-bold text-sm text-slate-800">{gw.name}</div>
+      <div className="text-[11px] text-slate-500 font-medium">{gw.companyName}</div>
+      <div className="flex items-center gap-2 text-[11px]">
+        <span className="font-mono text-slate-400">{gw.prefix}</span>
+        <span className={`px-1.5 py-0.5 text-[9px] font-bold uppercase ${
+          gw.status === 'online' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'
+        }`}>
+          {gw.status}
+        </span>
+      </div>
+      <div className="border-t border-slate-100 pt-1.5 space-y-0.5">
+        <div className="text-[11px] text-slate-600">
+          <span className="font-semibold text-slate-500">Lat:</span> {Number(gw.lat).toFixed(5)}
+        </div>
+        <div className="text-[11px] text-slate-600">
+          <span className="font-semibold text-slate-500">Lng:</span> {Number(gw.lng).toFixed(5)}
+        </div>
+        <div className="text-[10px] text-slate-400">
+          Updated: {formatTimestamp(gw.gps?.updatedAt)}
+        </div>
+      </div>
+      <div className="flex items-center gap-1.5 pt-1">
+        <button
+          onClick={(e) => { e.stopPropagation(); handleGetGps(gw.id) }}
+          disabled={loadingGps.has(gw.id)}
+          className="w-full py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold text-[10px] flex items-center justify-center gap-1.5 cursor-pointer transition-all"
+        >
+          {loadingGps.has(gw.id) ? (
+            <><i className="pi pi-spin pi-spinner text-[9px]" /> Fetching...</>
+          ) : (
+            <><i className="pi pi-refresh text-[9px]" /> Refresh GPS</>
+          )}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function HubPopupContent({ gateways, centerLat, centerLng, loadingGps, handleGetGps, setIsDispersed }) {
+  const [selectedIdx, setSelectedIdx] = useState(0)
+  const activeGw = gateways[selectedIdx] || gateways[0]
+
+  return (
+    <div className="min-w-[240px] max-w-[280px] space-y-2.5">
+      {/* Header */}
+      <div className="pb-2 border-b border-slate-200">
+        <div className="flex items-center justify-between gap-1">
+          <div className="flex items-center gap-1.5">
+            <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 font-bold text-[9px] uppercase tracking-wider">
+              Site Hub
+            </span>
+            <span className="text-xs font-bold text-slate-800">
+              {gateways.length} Gateways Here
+            </span>
+          </div>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              setIsDispersed(true)
+            }}
+            className="text-[9px] text-blue-600 hover:text-blue-800 font-bold flex items-center gap-0.5 cursor-pointer"
+            title="Fan out these gateways on the map"
+          >
+            <i className="pi pi-share-alt text-[8px]" />
+            Fan Out
+          </button>
+        </div>
+        <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+          Lat: {centerLat.toFixed(5)}, Lng: {centerLng.toFixed(5)}
+        </div>
+      </div>
+
+      {/* Gateway Tabs */}
+      <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-thin">
+        {gateways.map((gw, idx) => {
+          const isSelected = idx === selectedIdx
+          return (
+            <button
+              key={gw.id}
+              onClick={(e) => {
+                e.stopPropagation()
+                setSelectedIdx(idx)
+              }}
+              className={`px-2 py-1 text-[10px] font-bold shrink-0 flex items-center gap-1.5 transition-all cursor-pointer ${
+                isSelected
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${gw.status === 'online' ? 'bg-emerald-400' : 'bg-slate-400'}`} />
+              <span className="truncate max-w-[80px]">{gw.name}</span>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Active Gateway Details */}
+      {activeGw && (
+        <div className="bg-slate-50 p-2.5 border border-slate-200/80 space-y-1.5">
+          <div className="flex items-start justify-between gap-1">
+            <div>
+              <div className="font-bold text-sm text-slate-800 leading-snug">{activeGw.name}</div>
+              <div className="text-[11px] text-slate-500 font-medium">{activeGw.companyName}</div>
+            </div>
+            <span className={`px-1.5 py-0.5 text-[9px] font-bold uppercase shrink-0 ${
+              activeGw.status === 'online' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'
+            }`}>
+              {activeGw.status}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 text-[10px] text-slate-500 font-mono pt-1 border-t border-slate-200/60">
+            <span>Prefix: {activeGw.prefix}</span>
+          </div>
+
+          <div className="text-[10px] text-slate-400">
+            Updated: {formatTimestamp(activeGw.gps?.updatedAt)}
+          </div>
+
+          <div className="flex items-center gap-1.5 pt-1">
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleGetGps(activeGw.id)
+              }}
+              disabled={loadingGps.has(activeGw.id)}
+              className="w-full py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold text-[10px] flex items-center justify-center gap-1.5 cursor-pointer transition-all"
+            >
+              {loadingGps.has(activeGw.id) ? (
+                <><i className="pi pi-spin pi-spinner text-[9px]" /> Fetching...</>
+              ) : (
+                <><i className="pi pi-refresh text-[9px]" /> Refresh GPS</>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 function RecenterControl({ markers }) {
   const map = useMap()
@@ -63,6 +252,7 @@ export default function LiveLocationPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [companyFilter, setCompanyFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [isDispersed, setIsDispersed] = useState(false)
   const [configureModalVisible, setConfigureModalVisible] = useState(false)
   const [modalCompanyFilter, setModalCompanyFilter] = useState('all')
   const [modalSearch, setModalSearch] = useState('')
@@ -140,6 +330,45 @@ export default function LiveLocationPage() {
         gps: g.gps,
       }))
   }, [filteredGateways, companyMap])
+
+  // Group markers that share identical coordinates (~1.1 meter threshold)
+  const locationGroups = useMemo(() => {
+    const groups = new Map()
+
+    gpsMarkers.forEach((m) => {
+      const latNum = Number(m.lat)
+      const lngNum = Number(m.lng)
+      if (isNaN(latNum) || isNaN(lngNum)) return
+
+      const key = `${latNum.toFixed(5)},${lngNum.toFixed(5)}`
+      if (!groups.has(key)) {
+        groups.set(key, {
+          key,
+          centerLat: latNum,
+          centerLng: lngNum,
+          gateways: [],
+        })
+      }
+      groups.get(key).gateways.push(m)
+    })
+
+    return Array.from(groups.values()).map((g) => {
+      const isMultiple = g.gateways.length > 1
+      const hasOnline = g.gateways.some((gw) => gw.status === 'online')
+      const allOnline = g.gateways.every((gw) => gw.status === 'online')
+      return {
+        ...g,
+        count: g.gateways.length,
+        isMultiple,
+        hasOnline,
+        allOnline,
+      }
+    })
+  }, [gpsMarkers])
+
+  const overlappingSitesCount = useMemo(() => {
+    return locationGroups.filter((g) => g.count > 1).length
+  }, [locationGroups])
 
   // Gateways grouped by company for configure modal
   const groupedGateways = useMemo(() => {
@@ -233,6 +462,27 @@ export default function LiveLocationPage() {
           />
         </div>
 
+        {/* Disperse / Cluster Toggle when overlapping sites exist */}
+        {overlappingSitesCount > 0 && (
+          <button
+            onClick={() => setIsDispersed((prev) => !prev)}
+            className={`h-9 px-3 border text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+              isDispersed
+                ? 'bg-amber-500 border-amber-600 text-white shadow-sm'
+                : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+            }`}
+            title={isDispersed ? 'Group overlapping gateways into site hubs' : 'Disperse overlapping gateways in a circle'}
+          >
+            <i className={`pi ${isDispersed ? 'pi-th-large' : 'pi-share-alt'} text-xs`} />
+            <span>{isDispersed ? 'Group Sites' : 'Disperse Overlapping'}</span>
+            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono ${
+              isDispersed ? 'bg-amber-700 text-white' : 'bg-amber-100 text-amber-800'
+            }`}>
+              {overlappingSitesCount} site{overlappingSitesCount > 1 ? 's' : ''}
+            </span>
+          </button>
+        )}
+
         {/* Configure button */}
         <button
           onClick={() => { setConfigureModalVisible(true); setModalCompanyFilter('all'); setModalSearch('') }}
@@ -273,56 +523,107 @@ export default function LiveLocationPage() {
 
             <RecenterControl markers={gpsMarkers} />
 
-            {gpsMarkers.map((m) => (
-              <Marker
-                key={m.id}
-                position={[m.lat, m.lng]}
-                icon={redPinIcon}
-              >
-                <Tooltip direction="top" offset={[0, 2]} permanent={true}>
-                  <div className="text-xs font-bold whitespace-nowrap">
-                    {m.name}
-                    <span className="text-slate-400 font-normal ml-1">({m.companyName})</span>
-                  </div>
-                </Tooltip>
-                <Popup>
-                  <div className="min-w-[180px] space-y-2">
-                    <div className="font-bold text-sm text-slate-800">{m.name}</div>
-                    <div className="text-[11px] text-slate-500 font-medium">{m.companyName}</div>
-                    <div className="flex items-center gap-2 text-[11px]">
-                      <span className="font-mono text-slate-400">{m.prefix}</span>
-                      <span className={`px-1.5 py-0.5 text-[9px] font-bold uppercase ${
-                        m.status === 'online' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'
-                      }`}>
-                        {m.status}
+            {locationGroups.map((group) => {
+              // Case 1: Single gateway at this location
+              if (!group.isMultiple) {
+                const m = group.gateways[0]
+                return (
+                  <Marker
+                    key={m.id}
+                    position={[m.lat, m.lng]}
+                    icon={createPinIcon(m.status)}
+                  >
+                    <Tooltip direction="top" offset={[0, -2]} permanent={true}>
+                      <div className="text-xs font-bold whitespace-nowrap">
+                        {m.name}
+                        <span className="text-slate-400 font-normal ml-1">({m.companyName})</span>
+                      </div>
+                    </Tooltip>
+                    <Popup>
+                      <SingleGatewayPopupContent
+                        gw={m}
+                        loadingGps={loadingGps}
+                        handleGetGps={handleGetGps}
+                      />
+                    </Popup>
+                  </Marker>
+                )
+              }
+
+              // Case 2: Multiple gateways & User clicked "Disperse Overlapping"
+              if (isDispersed) {
+                const N = group.count
+                const R = Math.min(25 + N * 4, 60) // dispersion radius in meters
+                return (
+                  <Fragment key={`dispersed-group-${group.key}`}>
+                    {group.gateways.map((m, idx) => {
+                      const angle = (2 * Math.PI * idx) / N - Math.PI / 2
+                      const latOffset = (R / 111320) * Math.cos(angle)
+                      const lngOffset = (R / (111320 * Math.cos((group.centerLat * Math.PI) / 180))) * Math.sin(angle)
+                      const dispersedPos = [group.centerLat + latOffset, group.centerLng + lngOffset]
+
+                      return (
+                        <Fragment key={`dispersed-${m.id}`}>
+                          {/* Radial connector line back to the true physical location */}
+                          <Polyline
+                            positions={[[group.centerLat, group.centerLng], dispersedPos]}
+                            pathOptions={{ color: '#3b82f6', weight: 1.5, dashArray: '4, 4', opacity: 0.6 }}
+                          />
+                          <Marker
+                            position={dispersedPos}
+                            icon={createPinIcon(m.status, idx + 1)}
+                          >
+                            <Tooltip direction="top" offset={[0, -2]} permanent={true}>
+                              <div className="text-xs font-bold whitespace-nowrap">
+                                <span className="font-mono text-blue-600 mr-1">#{idx + 1}</span>
+                                {m.name}
+                                <span className="text-slate-400 font-normal ml-1">({m.companyName})</span>
+                              </div>
+                            </Tooltip>
+                            <Popup>
+                              <SingleGatewayPopupContent
+                                gw={m}
+                                loadingGps={loadingGps}
+                                handleGetGps={handleGetGps}
+                              />
+                            </Popup>
+                          </Marker>
+                        </Fragment>
+                      )
+                    })}
+                  </Fragment>
+                )
+              }
+
+              // Case 3: Multiple gateways at this location -> Unified Location Hub Marker
+              return (
+                <Marker
+                  key={`hub-${group.key}`}
+                  position={[group.centerLat, group.centerLng]}
+                  icon={createHubIcon(group.count, group.hasOnline)}
+                >
+                  <Tooltip direction="top" offset={[0, -2]} permanent={true}>
+                    <div className="text-xs font-bold whitespace-nowrap flex items-center gap-1.5">
+                      <span className={`w-2 h-2 rounded-full ${group.hasOnline ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                      <span>{group.count} Gateways at this site</span>
+                      <span className="text-slate-400 font-normal text-[10px]">
+                        ({group.gateways.slice(0, 2).map((g) => g.name).join(', ')}{group.count > 2 ? '...' : ''})
                       </span>
                     </div>
-                    <div className="border-t border-slate-100 pt-1.5 space-y-0.5">
-                      <div className="text-[11px] text-slate-600">
-                        <span className="font-semibold text-slate-500">Lat:</span> {m.lat}
-                      </div>
-                      <div className="text-[11px] text-slate-600">
-                        <span className="font-semibold text-slate-500">Lng:</span> {m.lng}
-                      </div>
-                      <div className="text-[10px] text-slate-400">
-                        Updated: {formatTimestamp(m.gps?.updatedAt)}
-                      </div>
-                    </div>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleGetGps(m.id) }}
-                      disabled={loadingGps.has(m.id)}
-                      className="w-full mt-1 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold text-[10px] flex items-center justify-center gap-1.5 cursor-pointer transition-all"
-                    >
-                      {loadingGps.has(m.id) ? (
-                        <><i className="pi pi-spin pi-spinner text-[9px]" /> Fetching...</>
-                      ) : (
-                        <><i className="pi pi-refresh text-[9px]" /> Refresh GPS</>
-                      )}
-                    </button>
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
+                  </Tooltip>
+                  <Popup>
+                    <HubPopupContent
+                      gateways={group.gateways}
+                      centerLat={group.centerLat}
+                      centerLng={group.centerLng}
+                      loadingGps={loadingGps}
+                      handleGetGps={handleGetGps}
+                      setIsDispersed={setIsDispersed}
+                    />
+                  </Popup>
+                </Marker>
+              )
+            })}
 
             {gpsMarkers.length === 0 && (
               <div className="leaflet-top leaflet-center" style={{ left: '50%', transform: 'translateX(-50%)' }}>

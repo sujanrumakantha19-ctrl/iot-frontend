@@ -48,13 +48,14 @@ export const telemetryApi = {
     })
     return res.data
   },
-  downloadManagerReport: async (employeeId, tagId, startDate, endDate, format = 'csv') => {
+  downloadManagerReport: async (employeeId, tagId, startDate, endDate, format = 'csv', timeFormat = '24h') => {
     const params = new URLSearchParams()
     if (employeeId) params.append('employeeId', employeeId)
     if (tagId) params.append('tagId', tagId)
     if (startDate) params.append('startDate', startDate)
     if (endDate) params.append('endDate', endDate)
     params.append('format', format)
+    if (timeFormat) params.append('timeFormat', timeFormat)
     const res = await api.get(`/manager/report/download?${params.toString()}`, {
       responseType: 'blob'
     })
@@ -108,12 +109,13 @@ export const telemetryApi = {
     })
     return res.data
   },
-  downloadEmployeeReport: async (tagId, startDate, endDate, format = 'csv') => {
+  downloadEmployeeReport: async (tagId, startDate, endDate, format = 'csv', timeFormat = '24h') => {
     const params = new URLSearchParams()
     if (tagId) params.append('tagId', tagId)
     if (startDate) params.append('startDate', startDate)
     if (endDate) params.append('endDate', endDate)
     params.append('format', format)
+    if (timeFormat) params.append('timeFormat', timeFormat)
     const res = await api.get(`/employee/report/download?${params.toString()}`, {
       responseType: 'blob'
     })

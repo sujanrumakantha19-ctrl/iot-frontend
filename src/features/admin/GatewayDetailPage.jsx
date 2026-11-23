@@ -13,6 +13,7 @@ import GatewayNetworkPanel from '../../components/shared/GatewayNetworkPanel'
 import ActiveNetworkCard from '../../components/shared/ActiveNetworkCard'
 import TcpModeSelection from '../../components/shared/TcpModeSelection'
 import TcpGatewayWorkspace from './TcpGatewayWorkspace'
+import UnifiedConfigHistoryModal from './UnifiedConfigHistoryModal'
 import { allowedGatewayWorkspace, gatewayWorkspaces } from '../../utils/gatewayProtocol'
 import { parameterLimit, rtuFirmwareErrors } from '../../utils/firmwareLimits'
 
@@ -578,6 +579,7 @@ export default function GatewayDetailPage({ managerMode = false }) {
   // Board publish status ('committed' | 'saved_only')
   const [publishStatus, setPublishStatus] = useState('committed')
   const [showChangelogModal, setShowChangelogModal] = useState(false)
+  const [showConfigHistoryModal, setShowConfigHistoryModal] = useState(false)
 
   // Dynamic max parameters state
   const [editMaxParamsDialog, setEditMaxParamsDialog] = useState(false)
@@ -678,8 +680,8 @@ export default function GatewayDetailPage({ managerMode = false }) {
   const workspaceTabs = protocol === 'settings' ? settingsTabs : rtuTabs
   const activeContentTab = protocol === 'settings' ? selectedSettingsTab : selectedRtuTab
   const tabClassName = (selected) => `px-5 py-2.5 text-xs font-bold uppercase tracking-wide cursor-pointer transition-all border-b-2 -mb-[1px] ${selected
-    ? 'border-blue-600 text-blue-700 bg-white'
-    : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300 bg-slate-50'}`
+    ? 'border-[var(--accent-primary)] text-[var(--accent-primary)] bg-[var(--bg-card)]'
+    : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-color)] bg-[var(--bg-hover)]'}`
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false)
@@ -2730,8 +2732,8 @@ export default function GatewayDetailPage({ managerMode = false }) {
       {/* Config History button */}
       <div className="flex justify-end">
         <button
-          onClick={() => navigate(`/admin/companies/${companyId}/gateways/${gatewayId}/config-history`)}
-          className="px-3.5 py-2 bg-white border border-slate-200 hover:bg-slate-50 font-bold text-xs text-slate-600 flex items-center gap-2 cursor-pointer transition-all"
+          onClick={() => setShowConfigHistoryModal(true)}
+          className="px-3.5 py-2 bg-white border border-slate-200 hover:bg-slate-50 font-bold text-xs text-slate-600 flex items-center gap-2 cursor-pointer transition-all shadow-sm rounded-lg"
         >
           <i className="pi pi-history text-slate-500" />
           Config History
@@ -2740,15 +2742,15 @@ export default function GatewayDetailPage({ managerMode = false }) {
 
       {/* Gateway info cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4">
-        <div className="bg-white border border-slate-200/80 p-4 space-y-1 rounded-[15px]">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Gateway ID</p>
-          <p className="text-sm font-bold text-slate-800 font-mono truncate">{gateway.prefix}</p>
+        <div style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)' }} className="border p-4 space-y-1 rounded-[15px]">
+          <p style={{ color: 'var(--text-secondary)' }} className="text-[10px] font-bold uppercase tracking-wide">Gateway ID</p>
+          <p style={{ color: 'var(--text-primary)' }} className="text-sm font-bold font-mono truncate">{gateway.prefix}</p>
         </div>
         <ActiveNetworkCard key={gatewayId} gateway={gateway} canQuery={!isManagerMode || !!gatewayFeatures.showWifi} />
-        <div className="bg-white border border-slate-200/80 p-4 space-y-1 flex flex-col justify-between rounded-[15px]">
+        <div style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)' }} className="border p-4 space-y-1 flex flex-col justify-between rounded-[15px]">
           <div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Status</p>
-            <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${gateway.status === 'online' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'}`}>
+            <p style={{ color: 'var(--text-secondary)' }} className="text-[10px] font-bold uppercase tracking-wide">Status</p>
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${gateway.status === 'online' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}>
               <span className={`w-1 h-1 rounded-full ${gateway.status === 'online' ? 'bg-emerald-500' : 'bg-red-500'}`} />
               {gateway.status}
             </span>
@@ -2763,10 +2765,10 @@ export default function GatewayDetailPage({ managerMode = false }) {
             {testing ? 'Testing...' : 'Test Status'}
           </button>
         </div>
-        <div className="bg-white border border-slate-200/80 p-4 space-y-1 flex flex-col justify-between rounded-[15px]">
+        <div style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)' }} className="border p-4 space-y-1 flex flex-col justify-between rounded-[15px]">
           <div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Version</p>
-            <p className="text-sm font-bold text-slate-800 truncate">{gateway.version || 'Unknown'}</p>
+            <p style={{ color: 'var(--text-secondary)' }} className="text-[10px] font-bold uppercase tracking-wide">Version</p>
+            <p style={{ color: 'var(--text-primary)' }} className="text-sm font-bold truncate">{gateway.version || 'Unknown'}</p>
           </div>
           <button
             disabled={checkingVersion}
@@ -2778,13 +2780,13 @@ export default function GatewayDetailPage({ managerMode = false }) {
             {checkingVersion ? 'Checking...' : 'Check Version'}
           </button>
         </div>
-        <div className="bg-white border border-slate-200/80 p-4 space-y-1 flex flex-col justify-between rounded-[15px]">
+        <div style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)' }} className="border p-4 space-y-1 flex flex-col justify-between rounded-[15px]">
           <div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Param Capacity</p>
-            <p className="text-sm font-bold text-slate-800">
+            <p style={{ color: 'var(--text-secondary)' }} className="text-[10px] font-bold uppercase tracking-wide">Param Capacity</p>
+            <p style={{ color: 'var(--text-primary)' }} className="text-sm font-bold">
               {totalParamCount} / <span className="text-blue-600 font-extrabold">{maxAllowedParams}</span>
             </p>
-            <span className="text-[10px] text-slate-400 font-medium block">
+            <span style={{ color: 'var(--text-secondary)' }} className="text-[10px] font-medium block">
               {groups.length} of {maxAllowedGroups} Groups
             </span>
           </div>
@@ -2802,10 +2804,10 @@ export default function GatewayDetailPage({ managerMode = false }) {
             </button>
           )}
         </div>
-        <div className="bg-white border border-slate-200/80 p-4 space-y-1 flex flex-col justify-between rounded-[15px]">
+        <div style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)' }} className="border p-4 space-y-1 flex flex-col justify-between rounded-[15px]">
           <div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Site Location</p>
-            <p className="text-sm font-medium text-slate-600 truncate" title={gateway.location || 'No location configured'} aria-live="polite">{gateway.location || 'No location configured'}</p>
+            <p style={{ color: 'var(--text-secondary)' }} className="text-[10px] font-bold uppercase tracking-wide">Site Location</p>
+            <p style={{ color: 'var(--text-primary)' }} className="text-sm font-medium truncate" title={gateway.location || 'No location configured'} aria-live="polite">{gateway.location || 'No location configured'}</p>
           </div>
           {(!isManagerMode || gatewayFeatures.showLocation) && (
             <button type="button" onClick={handleReadLocation} disabled={readingLocation}
@@ -2816,9 +2818,9 @@ export default function GatewayDetailPage({ managerMode = false }) {
             </button>
           )}
         </div>
-        <div className="bg-white border border-slate-200/80 p-4 space-y-1 rounded-[15px]">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Company</p>
-          <p className="text-sm font-bold text-slate-800 truncate">{company?.name || 'N/A'}</p>
+        <div style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)' }} className="border p-4 space-y-1 rounded-[15px]">
+          <p style={{ color: 'var(--text-secondary)' }} className="text-[10px] font-bold uppercase tracking-wide">Company</p>
+          <p style={{ color: 'var(--text-primary)' }} className="text-sm font-bold truncate">{company?.name || 'N/A'}</p>
         </div>
       </div>
 
@@ -2856,7 +2858,8 @@ export default function GatewayDetailPage({ managerMode = false }) {
             <TcpGatewayWorkspace key={gatewayId} gatewayId={gatewayId} gateway={gateway} tab={tcpTab}
               canDevices={!isManagerMode || !!gatewayFeatures.showDeviceList}
               canPublish={!isManagerMode || !!gatewayFeatures.showPublish}
-              canRead={!isManagerMode || !!gatewayFeatures.showReadConfig} />
+              canRead={!isManagerMode || !!gatewayFeatures.showReadConfig}
+              isManagerMode={isManagerMode} />
           </div>
       </section>
 
@@ -2997,15 +3000,13 @@ export default function GatewayDetailPage({ managerMode = false }) {
                       </div>
                     </div>
 
-                    {!isManagerMode && (
-                      <button
-                        onClick={() => handleDeviceDeleteRequest(idx)}
-                        className="w-7 h-7 flex items-center justify-center rounded border border-slate-200 text-slate-400 hover:text-red-600 hover:border-red-200 hover:bg-red-50 cursor-pointer transition-colors"
-                        title="Remove Device"
-                      >
-                        <i className="pi pi-trash text-xs" />
-                      </button>
-                    )}
+                    <button
+                      onClick={() => handleDeviceDeleteRequest(idx)}
+                      className="w-7 h-7 flex items-center justify-center rounded border border-slate-200 text-slate-400 hover:text-red-600 hover:border-red-200 hover:bg-red-50 cursor-pointer transition-colors"
+                      title="Remove Device"
+                    >
+                      <i className="pi pi-trash text-xs" />
+                    </button>
                   </div>
 
                   <div className="space-y-1.5 pt-1">
@@ -4453,6 +4454,15 @@ Device1,1,Electrical,P1,4,40001,Int,1,1,None,115200,8N1`}
           </div>
         </div>
       </Dialog>
+
+      {/* Unified Configuration History Modal (Modbus RTU & Modbus TCP) */}
+      <UnifiedConfigHistoryModal
+        visible={showConfigHistoryModal}
+        onHide={() => setShowConfigHistoryModal(false)}
+        gatewayId={gatewayId}
+        gateway={gateway}
+        initialTab={activeTab === 'Modbus TCP' ? 'TCP' : 'RTU'}
+      />
     </div>
   )
 }

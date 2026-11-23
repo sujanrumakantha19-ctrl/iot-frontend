@@ -50,6 +50,7 @@ export function newTcpRow(device, number) {
 }
 
 export function validateTcpGroups(groups, devices, maxParameters) {
+  maxParameters = Math.min(1000, maxParameters)
   const errors = [...validateTcpDevices(devices)], parameters = new Set(), numbers = new Set()
   if (!groups.length) errors.push('Create at least one TCP group.')
   if (groups.reduce((sum, group) => sum + group.rows.length, 0) > maxParameters) errors.push(`Gateway limit is ${maxParameters} TCP parameters.`)

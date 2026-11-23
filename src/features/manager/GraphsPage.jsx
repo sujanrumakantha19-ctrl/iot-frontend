@@ -270,20 +270,6 @@ function buildZoomOption(points, tag, theme = {}) {
       }
     },
     grid: { top: 32, bottom: 44, left: 52, right: 65 },
-    toolbox: {
-      show: true,
-      right: 15,
-      top: 2,
-      itemSize: 13,
-      feature: {
-        dataZoom: {
-          yAxisIndex: 'none',
-          title: { zoom: 'Box Zoom', back: 'Reset Zoom' }
-        },
-        restore: { title: 'Restore' }
-      },
-      iconStyle: { borderColor: textColor }
-    },
     dataZoom: [
       {
         type: 'inside',

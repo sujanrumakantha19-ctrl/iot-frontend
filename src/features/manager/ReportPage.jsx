@@ -8,6 +8,36 @@ import { telemetryApi } from '../../services/telemetryApi'
 import LoadingSpinner from '../../components/shared/LoadingSpinner'
 import { formatTagDisplayName } from '../../utils/tagUtils'
 
+export function formatReportDate(timestamp) {
+  if (!timestamp) return '—'
+  const d = new Date(timestamp)
+  if (isNaN(d.getTime())) return '—'
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+export function formatReportTime(timestamp, format = '24h') {
+  if (!timestamp) return '—'
+  const d = new Date(timestamp)
+  if (isNaN(d.getTime())) return '—'
+
+  const hours24 = d.getHours()
+  const minutes = String(d.getMinutes()).padStart(2, '0')
+  const seconds = String(d.getSeconds()).padStart(2, '0')
+
+  if (format === '12h') {
+    const ampm = hours24 >= 12 ? 'PM' : 'AM'
+    const hours12 = hours24 % 12 || 12
+    const hoursStr = String(hours12).padStart(2, '0')
+    return `${hoursStr}:${minutes}:${seconds} ${ampm}`
+  }
+
+  const hoursStr = String(hours24).padStart(2, '0')
+  return `${hoursStr}:${minutes}:${seconds}`
+}
+
 export default function ReportPage() {
   const session = getSession()
   const isEmployee = session?.role === 'employee'
@@ -25,6 +55,9 @@ export default function ReportPage() {
   const [tagSearchText, setTagSearchText] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+  const [timeFormat, setTimeFormat] = useState(
+    () => localStorage.getItem('report_time_format') || '24h'
+  )
 
   // Pagination state
   const [page, setPage] = useState(1)
@@ -153,8 +186,8 @@ export default function ReportPage() {
       const formattedEnd = endDate ? new Date(`${endDate}T23:59:59.999`).toISOString() : undefined
 
       const response = isEmployee
-        ? await telemetryApi.downloadEmployeeReport(selectedTagId, formattedStart, formattedEnd, format)
-        : await telemetryApi.downloadManagerReport(selectedEmpId, selectedTagId, formattedStart, formattedEnd, format)
+        ? await telemetryApi.downloadEmployeeReport(selectedTagId, formattedStart, formattedEnd, format, timeFormat)
+        : await telemetryApi.downloadManagerReport(selectedEmpId, selectedTagId, formattedStart, formattedEnd, format, timeFormat)
 
       const mimeType = format === 'json' ? 'application/json' : 'text/csv;charset=utf-8;'
       const blob = response.data instanceof Blob
@@ -197,16 +230,24 @@ export default function ReportPage() {
           let filename = `report_${dateStr}.${format}`
           let mimeType = format === 'json' ? 'application/json' : 'text/csv;charset=utf-8;'
           if (format === 'json') {
-            content = JSON.stringify(readings, null, 2)
-          } else {
-            const headers = ['Timestamp', 'Device Name', 'Parameter Label', 'Value', 'Unit']
-            const rows = readings.map(r => [
-              r.timestamp,
-              `"${(r.deviceName || '').replace(/"/g, '""')}"`,
-              `"${(formatTagDisplayName(r) || '').replace(/"/g, '""')}"`,
-              r.value !== null && r.value !== undefined ? r.value : '',
-              `"${(r.unit || '').replace(/"/g, '""')}"`
-            ])
+            const enriched = readings.map(r => ({
+              ...r,
+              date: formatReportDate(r.timestamp),
+              time: formatReportTime(r.timestamp, timeFormat)
+            }))
+            const headers = ['Device Name', 'Parameter Label', 'Date', 'Time', 'Value']
+            const rows = readings.map(r => {
+              const valStr = r.value !== null && r.value !== undefined
+                ? (r.unit ? `${r.value} ${r.unit}` : String(r.value))
+                : ''
+              return [
+                `"${(r.deviceName || '').replace(/"/g, '""')}"`,
+                `"${(formatTagDisplayName(r) || '').replace(/"/g, '""')}"`,
+                formatReportDate(r.timestamp),
+                `"${formatReportTime(r.timestamp, timeFormat)}"`,
+                `"${valStr.replace(/"/g, '""')}"`
+              ]
+            })
             content = '\uFEFF' + [headers.join(','), ...rows.map(row => row.join(','))].join('\r\n')
           }
           const fallbackBlob = new Blob([content], { type: mimeType })
@@ -300,7 +341,7 @@ export default function ReportPage() {
           </div>
         </div>
 
-        <form onSubmit={handleSearch} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
+        <form onSubmit={handleSearch} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
           <div className="space-y-1 relative">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Telemetry Tag</label>
             <div className="relative">
@@ -453,6 +494,24 @@ export default function ReportPage() {
             </div>
           </div>
 
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Timing</label>
+            <div className="relative">
+              <select
+                value={timeFormat}
+                onChange={(e) => {
+                  const val = e.target.value
+                  setTimeFormat(val)
+                  localStorage.setItem('report_time_format', val)
+                }}
+                className="w-full border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-600 bg-white h-[38px] text-slate-700 font-semibold cursor-pointer rounded-none"
+              >
+                <option value="24h">24-Hour (24H)</option>
+                <option value="12h">12-Hour (12H AM/PM)</option>
+              </select>
+            </div>
+          </div>
+
           <button
             type="submit"
             disabled={searching}
@@ -537,12 +596,11 @@ export default function ReportPage() {
             scrollable
           >
             <Column
-              header="Timestamp"
-              body={(r) => <span className="font-mono text-slate-500 text-[11px]">{new Date(r.timestamp).toLocaleString()}</span>}
-              field="timestamp"
-              style={{ minWidth: '160px' }}
+              field="deviceName"
+              header="Device Name"
+              style={{ minWidth: '130px' }}
+              className="text-slate-800 font-bold"
             />
-            <Column field="deviceName" header="Device Name" style={{ minWidth: '120px' }} className="text-slate-700 font-semibold" />
             <Column
               header="Parameter Label"
               style={{ minWidth: '160px' }}
@@ -550,14 +608,34 @@ export default function ReportPage() {
               body={(r) => formatTagDisplayName(r)}
             />
             <Column
+              header="Date"
+              body={(r) => (
+                <span className="font-mono text-slate-700 font-bold text-xs whitespace-nowrap">
+                  {formatReportDate(r.timestamp)}
+                </span>
+              )}
+              field="date"
+              style={{ minWidth: '110px' }}
+            />
+            <Column
+              header={`Time (${timeFormat === '12h' ? '12H' : '24H'})`}
+              body={(r) => (
+                <span className="font-mono text-slate-500 font-semibold text-xs whitespace-nowrap">
+                  {formatReportTime(r.timestamp, timeFormat)}
+                </span>
+              )}
+              field="time"
+              style={{ minWidth: '125px' }}
+            />
+            <Column
               header="Value"
               body={(r) => (
-                <span className="font-mono font-extrabold text-slate-800 bg-slate-50 border border-slate-200/80 px-2 py-0.5 text-xs">
-                  {r.value !== null && r.value !== undefined ? String(r.value) : 'N/A'} <span className="text-[9px] text-slate-450 font-normal ml-0.5">{r.unit}</span>
+                <span className="font-mono font-extrabold text-slate-800 bg-slate-50 border border-slate-200/80 px-2 py-0.5 text-xs whitespace-nowrap">
+                  {r.value !== null && r.value !== undefined ? String(r.value) : 'N/A'}{r.unit ? <span className="text-[10px] text-slate-500 font-normal ml-1">{r.unit}</span> : ''}
                 </span>
               )}
               field="value"
-              style={{ minWidth: '90px' }}
+              style={{ minWidth: '100px' }}
             />
           </DataTable>
         </div>

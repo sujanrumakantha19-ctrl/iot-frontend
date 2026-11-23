@@ -13,6 +13,7 @@ const labelFor = (id) => NETWORK_MODES.find(mode => mode.id === id)?.label || id
 export default function GatewayNetworkPanel({ gatewayId }) {
   const [choice, setChoice] = useState(null)
   const [physical, setPhysical] = useState(null)
+  const [showPassword, setShowPassword] = useState(false)
   const [pending, setPending] = useState(null)
   const [errors, setErrors] = useState({})
   const pendingRef = useRef(null)
@@ -43,7 +44,7 @@ export default function GatewayNetworkPanel({ gatewayId }) {
         const result = query === 'choice' ? parseNetworkChoice(data.payload) : parsePhysicalStatus(data.payload)
         const received = { ...result, receivedAt: new Date().toLocaleTimeString() }
         if (query === 'choice') setChoice(received)
-        else setPhysical(received)
+        else { setPhysical(received); setShowPassword(false) }
         setErrors(prev => ({ ...prev, [query]: result.valid ? '' : 'The gateway returned an unrecognized response. The original response is shown below.' }))
         pendingRef.current = null
         setPending(null)
@@ -138,6 +139,26 @@ export default function GatewayNetworkPanel({ gatewayId }) {
               {physical.mode === 'none' ? 'No active interface' : labelFor(physical.mode)}
             </p>
             <p className="text-xs text-slate-600 mt-2">{physical.mode === 'none' ? 'The gateway reports no active physical link.' : 'Reported by the gateway as the active data connection.'}</p>
+            {physical.mode !== 'none' && Object.keys(physical.details).length > 0 && <dl className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 border-t border-emerald-200 pt-4">
+              {[
+                ['addressMode', 'IP configuration'],
+                ['ipAddress', 'IP address'],
+                ['ssid', 'WiFi network (SSID)'],
+                ['apn', 'APN'],
+              ].filter(([key]) => key in physical.details).map(([key, label]) => <div key={key} className="rounded-lg border border-emerald-100 bg-white/80 px-3 py-2.5 min-w-0">
+                <dt className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{label}</dt>
+                <dd className={`mt-1 text-xs font-semibold text-slate-800 break-words ${key === 'ipAddress' ? 'font-mono' : ''}`}>{physical.details[key] || 'Not provided'}</dd>
+              </div>)}
+              {'password' in physical.details && <div className="rounded-lg border border-emerald-100 bg-white/80 px-3 py-2.5 min-w-0 sm:col-span-2">
+                <dt className="text-[10px] font-bold uppercase tracking-wide text-slate-500">WiFi password</dt>
+                <dd className="mt-1 flex items-center justify-between gap-3 text-xs text-slate-800">
+                  <span className="font-mono break-all">{physical.details.password ? showPassword ? physical.details.password : '••••••••' : 'Not provided'}</span>
+                  {physical.details.password && <button type="button" aria-pressed={showPassword} onClick={() => setShowPassword(previous => !previous)} className="shrink-0 inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-[11px] font-bold cursor-pointer">
+                    <i className={showPassword ? 'pi pi-eye-slash' : 'pi pi-eye'} aria-hidden="true" />{showPassword ? 'Hide' : 'Show'}
+                  </button>}
+                </dd>
+              </div>}
+            </dl>}
           </div> : <p className="text-xs text-slate-500 py-4">{physical ? 'Unable to identify the active interface.' : 'Read the active interface to check the current data connection.'}</p>}
           {errors.physical && <p role="status" className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-3">{errors.physical}</p>}
           {physical && <ResponseInfo result={physical} />}
@@ -152,6 +173,6 @@ export default function GatewayNetworkPanel({ gatewayId }) {
 function ResponseInfo({ result }) {
   return <div className="border-t border-slate-100 pt-3 text-[11px] text-slate-500 space-y-1">
     <p>Last response: {result.receivedAt}</p>
-    <p className="break-words">Gateway response: <span className="font-mono text-slate-600">{result.raw || '(empty response)'}</span></p>
+    <p className="break-words">Gateway response: <span className="font-mono text-slate-600">{(result.displayRaw ?? result.raw) || '(empty response)'}</span></p>
   </div>
 }

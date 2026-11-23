@@ -4,7 +4,9 @@ export default function HorizontalBarGauge({
   max = 100,
   unit = '',
   color = '#22c55e',
-  label = ''
+  label = '',
+  warningThreshold = null,
+  criticalThreshold = null
 }) {
   const numVal = parseFloat(value)
   const minValue = Number(min)
@@ -19,6 +21,39 @@ export default function HorizontalBarGauge({
 
   const midValue = (minValue + maxValue) / 2
   const barColor = color || '#22c55e'
+
+  const wVal = warningThreshold !== null && warningThreshold !== '' && !isNaN(Number(warningThreshold)) ? Number(warningThreshold) : null
+  const cVal = criticalThreshold !== null && criticalThreshold !== '' && !isNaN(Number(criticalThreshold)) ? Number(criticalThreshold) : null
+
+  const warnPct = wVal !== null
+    ? Math.max(0, Math.min(100, ((wVal - minValue) / range) * 100))
+    : null
+
+  const critPct = cVal !== null
+    ? Math.max(0, Math.min(100, ((cVal - minValue) / range) * 100))
+    : null
+
+  const isInverted = wVal !== null && cVal !== null && wVal > cVal
+  let isWarningCrossed = false
+  let isCriticalCrossed = false
+
+  if (!isNaN(numVal)) {
+    if (isInverted) {
+      if (cVal !== null && numVal <= cVal) {
+        isCriticalCrossed = true
+        isWarningCrossed = true
+      } else if (wVal !== null && numVal <= wVal) {
+        isWarningCrossed = true
+      }
+    } else {
+      if (cVal !== null && numVal >= cVal) {
+        isCriticalCrossed = true
+        isWarningCrossed = true
+      } else if (wVal !== null && numVal >= wVal) {
+        isWarningCrossed = true
+      }
+    }
+  }
 
   return (
     <div className="w-full bg-slate-900/90 border border-slate-800 rounded-lg p-3 space-y-1.5 font-sans">
@@ -43,6 +78,32 @@ export default function HorizontalBarGauge({
           }}
           className="rounded-full shadow-sm"
         />
+
+        {/* Warning Threshold Marker Line */}
+        {warnPct !== null && (
+          <div
+            style={{ left: `${warnPct}%` }}
+            title={`Warning Threshold: ${wVal}${unit ? ` ${unit}` : ''}`}
+            className={`absolute top-0 bottom-0 w-0.5 z-10 pointer-events-none transition-all ${
+              isWarningCrossed
+                ? 'bg-amber-400 shadow-[0_0_8px_#f59e0b] animate-pulse'
+                : 'bg-amber-400/80 shadow-[0_0_2px_#f59e0b]'
+            }`}
+          />
+        )}
+
+        {/* Critical Threshold Marker Line */}
+        {critPct !== null && (
+          <div
+            style={{ left: `${critPct}%` }}
+            title={`Critical Threshold: ${cVal}${unit ? ` ${unit}` : ''}`}
+            className={`absolute top-0 bottom-0 w-0.5 z-10 pointer-events-none transition-all ${
+              isCriticalCrossed
+                ? 'bg-rose-500 shadow-[0_0_8px_#ef4444] animate-pulse'
+                : 'bg-rose-500/80 shadow-[0_0_2px_#ef4444]'
+            }`}
+          />
+        )}
       </div>
 
       {/* Scale Labels */}

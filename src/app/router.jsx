@@ -78,6 +78,7 @@ export default function AppRouter() {
         <Route path="gateways" element={<ManagerGatewaysPage />} />
         <Route path="gateways/:gatewayId" element={<GatewayDetailPage managerMode={true} />} />
         <Route path="assign" element={<AssignPage />} />
+        <Route path="digital-meters" element={<DigitalMetersViewPage />} />
         <Route path="asset-digital-twin" element={<ManagerAssetDigitalTwinPage />} />
         <Route path="thresholds" element={<ThresholdsPage />} />
         <Route path="graphs" element={<GraphsPage />} />

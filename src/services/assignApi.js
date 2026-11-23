@@ -1,4 +1,5 @@
 import api from './axios'
+import { getSession } from './auth'
 
 export const assignApi = {
   // Manager: Get employees list with assigned parameters count
@@ -32,9 +33,11 @@ export const assignApi = {
     return res.data
   },
 
-  // Employee: Get assigned digital meters
+  // Get assigned digital meters (supports employee & manager)
   getEmployeeDigitalMeters: async (page = 1, limit = 10) => {
-    const res = await api.get(`/employee/digital-meters?page=${page}&limit=${limit}`)
+    const sess = getSession()
+    const prefix = sess?.role === 'manager' ? '/manager' : '/employee'
+    const res = await api.get(`${prefix}/digital-meters?page=${page}&limit=${limit}`)
     return res.data
   }
 }
