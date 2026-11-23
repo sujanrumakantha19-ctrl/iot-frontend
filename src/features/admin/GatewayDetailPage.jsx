@@ -14,6 +14,7 @@ import ActiveNetworkCard from '../../components/shared/ActiveNetworkCard'
 import TcpModeSelection from '../../components/shared/TcpModeSelection'
 import TcpGatewayWorkspace from './TcpGatewayWorkspace'
 import { allowedGatewayWorkspace, gatewayWorkspaces } from '../../utils/gatewayProtocol'
+import { parameterLimit, rtuFirmwareErrors } from '../../utils/firmwareLimits'
 
 const MAX_GROUP_SIZE = 50
 const MAX_GROUPS_PER_GATEWAY = 20
@@ -74,6 +75,7 @@ const getUsedSlaveIds = (rows, excludeDeviceName) => {
 
 const BAUD_RATES = [110, 300, 600, 1200, 2400, 4800, 9600, 14400, 19200, 38400, 57600, 115200, 230400, 460800, 921600]
 const SERIAL_CONFIGS = ['8N1', '8E1', '8O1', '8N2', '7E1', '7O1', '7N1']
+const ALLOWED_SERIAL_CONFIGS = SERIAL_CONFIGS
 
 // Map 1-based hardware protocol index (1..15) or raw number to actual baud rate (e.g. 12 -> 115200, 115200 -> 115200)
 const normalizeBaudRate = (rate) => {
@@ -327,7 +329,7 @@ const getDuplicateAddressIndices = (rows) => {
 }
 
 const validateGroupAddressUniqueness = (rows, groupLabel = 'Group') => {
-  const errors = []
+  const errors = rtuFirmwareErrors(rows, groupLabel.match(/^G(\d+)$/)?.[1])
   const seen = new Map()
   rows.forEach((row, idx) => {
     if (!isAddressFilled(row.address)) return
@@ -396,7 +398,7 @@ const validateParsedData = (rows, existingDevicesList = [], maxAllowedParams = 1
       errors.push(`Row ${rNum}: Slave ID must be a valid integer between 1 and 247.`)
     }
 
-    const fc = parseInt(row.functionCode, 10)
+    const fc = Number(row.functionCode)
     if (isNaN(fc) || (fc !== 3 && fc !== 4)) {
       errors.push(`Row ${rNum}: Function Code must be either 3 or 4.`)
     }
@@ -411,9 +413,9 @@ const validateParsedData = (rows, existingDevicesList = [], maxAllowedParams = 1
       errors.push(`Row ${rNum}: Data Type must be either "Int" or "Float".`)
     }
 
-    const len = parseInt(row.length, 10)
-    if (isNaN(len) || len < 1) {
-      errors.push(`Row ${rNum}: Length must be a positive integer.`)
+    const len = Number(row.length)
+    if (![1, 2].includes(len)) {
+      errors.push(`Row ${rNum}: Length must be 1 or 2.`)
     }
 
     const br = parseInt(row.baudRate, 10)
@@ -421,8 +423,9 @@ const validateParsedData = (rows, existingDevicesList = [], maxAllowedParams = 1
       errors.push(`Row ${rNum}: Baud Rate ${row.baudRate} is invalid. Allowed: ${BAUD_RATES.join(', ')}.`)
     }
 
-    if (!row.serialConfig || !ALLOWED_SERIAL_CONFIGS.includes(row.serialConfig.toUpperCase())) {
-      errors.push(`Row ${rNum}: Serial Config "${row.serialConfig}" is invalid. Allowed: ${ALLOWED_SERIAL_CONFIGS.join(', ')}.`)
+    const sc = (row.serialConfig || '').trim().toUpperCase()
+    if (!sc || !ALLOWED_SERIAL_CONFIGS.includes(sc)) {
+      errors.push(`Row ${rNum}: Serial Config "${row.serialConfig || ''}" is invalid. Allowed: ${ALLOWED_SERIAL_CONFIGS.join(', ')}.`)
     }
 
     // Consistency check: Device Name <-> Slave ID must be 1-to-1
@@ -591,8 +594,8 @@ export default function GatewayDetailPage({ managerMode = false }) {
 
   const handleSaveMaxParams = async () => {
     const val = parseInt(newMaxParams, 10)
-    if (isNaN(val) || val < 1 || val > 5000) {
-      showToast({ severity: 'warn', summary: 'Invalid Limit', detail: 'Max parameters must be between 1 and 5000.' })
+    if (isNaN(val) || val < 1 || val > 1000) {
+      showToast({ severity: 'warn', summary: 'Invalid Limit', detail: 'Max parameters must be between 1 and 1000 (G1–G20).' })
       return
     }
     if (val < totalParamCount) {
@@ -1441,7 +1444,8 @@ export default function GatewayDetailPage({ managerMode = false }) {
 
   // ---- Row operations scoped to active group ----
 
-  const maxAllowedParams = gateway?.maxParameters || (gateway?.maxGroups ? gateway.maxGroups * 50 : 1000)
+  const maxAllowedParams = parameterLimit(gateway)
+  const rtuFirmwareIssue = groups.flatMap((rows, index) => rtuFirmwareErrors(rows, groupNums[index]))[0]
   const maxAllowedGroups = Math.ceil(maxAllowedParams / 50)
   const totalParamCount = groups.reduce((acc, g) => acc + (g?.length || 0), 0)
 
@@ -1657,7 +1661,7 @@ export default function GatewayDetailPage({ managerMode = false }) {
         if (isAddressFilled(addr) && findDuplicateAddressInGroup(groupRows, newSlaveId, addr, index) !== null) {
           showToast({
             severity: 'warn',
-            summary: 'Duplicate Address',
+            summary: 'Configuration Validation',
             detail: `Slave ID ${newSlaveId} already uses address ${Number(addr)} in ${groupLabel}.`
           })
           return prev
@@ -1683,7 +1687,7 @@ export default function GatewayDetailPage({ managerMode = false }) {
         if (isAddressFilled(addr) && findDuplicateAddressInGroup(groupRows, sid, addr, index) !== null) {
           showToast({
             severity: 'warn',
-            summary: 'Duplicate Address',
+            summary: 'Configuration Validation',
             detail: `Slave ID ${sid} already uses address ${Number(addr)} in ${groupLabel}.`
           })
           return prev
@@ -1739,7 +1743,7 @@ export default function GatewayDetailPage({ managerMode = false }) {
 
       showToast({
         severity: 'warn',
-        summary: 'Duplicate Address',
+        summary: 'Configuration Validation',
         detail: `Slave ID ${Number(row.slaveId)} already uses address ${Number(row.address)} in ${groupLabel}.`
       })
       handleRowChange(index, 'address', previousAddress)
@@ -1827,7 +1831,7 @@ export default function GatewayDetailPage({ managerMode = false }) {
         setCountdown({
           visible: true,
           title: `Deleting G${groupNum}`,
-          subtitle: `Sending delete command to board (${gateway?.prefix}/Setconfig/G${groupNum}/Del). Waiting for board ACK on G${groupNum}/Del/Ack...`
+          subtitle: `Sending delete command to board (${gateway?.prefix}/SetconfigRTU/G${groupNum}/Del). Waiting for board ACK on G${groupNum}/Del/Ack...`
         })
       }
 
@@ -2045,7 +2049,7 @@ export default function GatewayDetailPage({ managerMode = false }) {
         validateGroupAddressUniqueness(g.rows, `G${g.groupNum}`)
       )
       if (addressDupErrors.length > 0) {
-        showToast({ severity: 'warn', summary: 'Duplicate Address', detail: addressDupErrors[0] })
+        showToast({ severity: 'warn', summary: 'Configuration Validation', detail: addressDupErrors[0] })
         return
       }
 
@@ -2093,7 +2097,7 @@ export default function GatewayDetailPage({ managerMode = false }) {
           break
         }
       }
-      showToast({ severity: 'warn', summary: 'Duplicate Address', detail: addressDupErrors[0] })
+      showToast({ severity: 'warn', summary: 'Configuration Validation', detail: addressDupErrors[0] })
       return
     }
 
@@ -2157,7 +2161,7 @@ export default function GatewayDetailPage({ managerMode = false }) {
 
     const addressDupErrors = validateGroupAddressUniqueness(group, `G${groupNum}`)
     if (addressDupErrors.length > 0) {
-      showToast({ severity: 'warn', summary: 'Duplicate Address', detail: addressDupErrors[0] })
+      showToast({ severity: 'warn', summary: 'Configuration Validation', detail: addressDupErrors[0] })
       return
     }
 
@@ -2181,7 +2185,7 @@ export default function GatewayDetailPage({ managerMode = false }) {
       setCountdown({
         visible: true,
         title: `Publishing G${groupNum}`,
-        subtitle: `Publishing G${groupNum} to ${gateway?.prefix}/Setconfig/G${groupNum}. Waiting for board ACK on G${groupNum}/Ack...`
+        subtitle: `Publishing G${groupNum} to ${gateway?.prefix}/SetconfigRTU/G${groupNum}. Waiting for board ACK on G${groupNum}/Ack...`
       })
 
       const mappedRows = group.map(row => ({
@@ -2598,14 +2602,9 @@ export default function GatewayDetailPage({ managerMode = false }) {
                       onChange={(e) => handleRowChange(index, 'functionCode', parseInt(e.target.value, 10))}
                       disabled={readOnly}
                     >
-                      <option value={1}>01</option>
-                      <option value={2}>02</option>
+                      {![3, 4].includes(Number(row.functionCode)) && <option value={row.functionCode} disabled>{row.functionCode} (unsupported)</option>}
                       <option value={3}>03</option>
                       <option value={4}>04</option>
-                      <option value={5}>05</option>
-                      <option value={6}>06</option>
-                      <option value={15}>15</option>
-                      <option value={16}>16</option>
                     </select>
                   </td>
                   <td className="p-2">
@@ -2654,6 +2653,8 @@ export default function GatewayDetailPage({ managerMode = false }) {
                       type="number"
                       className="w-12 border border-slate-200 px-2 py-1 focus:ring-1 focus:ring-blue-600 focus:outline-none"
                       value={row.length}
+                      min={1}
+                      max={2}
                       onChange={(e) => handleRowChange(index, 'length', parseInt(e.target.value, 10))}
                       disabled={readOnly}
                     />
@@ -2888,6 +2889,7 @@ export default function GatewayDetailPage({ managerMode = false }) {
         )}
 
       <div hidden={protocol !== 'rtu'}>
+      {rtuFirmwareIssue && <p role="alert" className="mb-4 border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">{rtuFirmwareIssue} Saved configuration has been preserved. Correct unsupported values before publishing.</p>}
       {/* === TAB 0: Device List === */}
       {selectedRtuTab === 0 && (
         <div className="bg-white border border-slate-200/80 p-6 space-y-6">
@@ -4433,7 +4435,7 @@ Device1,1,Electrical,P1,4,40001,Int,1,1,None,115200,8N1`}
             <input
               type="number"
               min={Math.max(1, totalParamCount)}
-              max={5000}
+              max={1000}
               onChange={(e) => {
                 const val = e.target.value
                 if (val === '') {
